@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.menoni.pil.bot.discord.DiscordBot;
+import net.menoni.pil.bot.discord.emote.Emotable;
 import net.menoni.pil.bot.discord.listener.chatcmd.ChatCommand;
 import net.menoni.pil.bot.jdbc.model.JdbcMatch;
 import net.menoni.pil.bot.jdbc.model.JdbcMember;
@@ -108,12 +109,25 @@ public class TeamCommand implements ChatCommand {
 					captainNameDisplay = captainSignup.getDiscordName();
 					captainNotInServerDisplay = " **(NOT IN SERVER)**";
 				}
+				String emote = "";
+				if (sortedTeam.getEmoteName() != null && sortedTeam.getEmoteId() != null) {
+					emote = "%s ".formatted(Emotable.printById(sortedTeam.getEmoteName(), sortedTeam.getEmoteId(), false));
+				}
 				sb.append("- **Team:** ")
+						.append(emote)
 						.append(DiscordFormattingUtil.roleAsString(sortedTeam.getDiscordRoleId()))
 						.append(" -> **Captain:** ")
 						.append(captainNameDisplay)
 						.append(captainNotInServerDisplay)
 						.append("\n");
+
+				if (sortedTeam.getEmoteId() == null || sortedTeam.getEmoteName() == null) {
+					if (sortedTeam.getImageUrl() != null && !sortedTeam.getImageUrl().isBlank()) {
+						sb.append("_emote not set - signup image:_ `").append(sortedTeam.getImageUrl()).append("`\n");
+					} else {
+						sb.append("_emote not set - no image provided_\n");
+					}
+				}
 			}
 		}
 		JDAUtil.queueAndWait(channel.sendMessage(sb.toString()));

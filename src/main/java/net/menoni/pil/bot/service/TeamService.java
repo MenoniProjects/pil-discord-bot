@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -265,7 +266,7 @@ public class TeamService {
 				JdbcTeam teamForSignup = existingTeams.stream().filter(e -> Objects.equals(e.getName(), signupLine.getTeamName())).findAny().orElse(null);
 				boolean newTeam = false;
 				if (teamForSignup == null) {
-					teamForSignup = ensureTeam(signupLine.getTeamName(), signupLine.getTeamColor(), signupLine.getTeamImageUrl());
+					teamForSignup = ensureTeam(signupLine.getTeamName(), signupLine.getTeamColor(), nullifyBlank(signupLine.getTeamImageUrl()));
 					existingTeams.add(teamForSignup);
 					newTeam = true;
 				}
@@ -273,7 +274,7 @@ public class TeamService {
 
 				List<JdbcTeamSignup> signupsForTeam = new ArrayList<>(existingSignups.stream().filter(s -> Objects.equals(s.getTeamId(), teamId)).toList());
 
-				List<CSVSignupMember> csvSignupMembers = membersFromSignup(signupLine);
+				List<CSVSignupMember> csvSignupMembers = membersFromSignup(signupLine.getTeamName(), resultLines, signupLine);
 
 				for (CSVSignupMember csvSignupMember : csvSignupMembers) {
 					JdbcTeamSignup existingSignup = signupsForTeam.stream().filter(s -> Objects.equals(s.getTrackmaniaUuid(), csvSignupMember.trackmaniaUuid())).findAny().orElse(null);
@@ -297,14 +298,9 @@ public class TeamService {
 					}
 				}
 				if (newTeam) {
-					resultLines.add("Added team **%s** with members %s, %s, %s, %s, %s and %s".formatted(
+					resultLines.add("Added team **%s** with members %s".formatted(
 							teamForSignup.getName(),
-							csvSignupMembers.get(0).trackmaniaName(),
-							csvSignupMembers.get(1).trackmaniaName(),
-							csvSignupMembers.get(2).trackmaniaName(),
-							csvSignupMembers.get(3).trackmaniaName(),
-							csvSignupMembers.get(4).trackmaniaName(),
-							csvSignupMembers.get(5).trackmaniaName()
+							csvSignupMembers.stream().map(CSVSignupMember::trackmaniaName).collect(Collectors.joining(", "))
 					));
 				}
 
@@ -312,7 +308,6 @@ public class TeamService {
 					resultLines.add("Removed **%s** from team **%s**".formatted(jdbcTeamSignup.getTrackmaniaName(), teamForSignup.getName()));
 					this.teamSignupRepository.deleteSignup(jdbcTeamSignup);
 				}
-
 				teamIdsParsed.add(teamForSignup.getId());
 			} catch (Exception e) {
 				resultLines.add(String.format("Failed parsing members for team `%s`: %s", signupLine.getTeamName(), e.getMessage()));
@@ -323,9 +318,7 @@ public class TeamService {
 		existingTeams.stream().filter(t -> !teamIdsParsed.contains(t.getId())).forEach(e -> {
 			resultLines.add("Removed team **%s**".formatted(e.getName()));
 			this.teamRepository.deleteTeam(bot, e);
-			existingSignups.stream().filter(s -> Objects.equals(s.getTeamId(), e.getId())).forEach(signup -> {
-				this.teamSignupRepository.deleteSignup(signup);
-			});
+			this.teamSignupRepository.deleteSignupsForTeam(e.getId());
 		});
 		existingTeams.removeIf(t -> !teamIdsParsed.contains(t.getId()));
 
@@ -339,12 +332,12 @@ public class TeamService {
 			}
 		}
 
-		// check every team having 3 sign-ups
+		// check every team having 3-6 sign-ups
 		List<JdbcTeam> allTeams = this.teamRepository.getAll();
 		for (JdbcTeam team : allTeams) {
 			long signupCount = allSignups.stream().filter(s -> Objects.equals(s.getTeamId(), team.getId())).count();
-			if (signupCount != 6) {
-				resultLines.add("Team **%s** has %d sign-ups".formatted(team.getName(), signupCount));
+			if (signupCount < 3 || signupCount > 6) {
+				resultLines.add("Team **%s** has %d sign-ups (expecting 3-6)".formatted(team.getName(), signupCount));
 			}
 		}
 
@@ -356,15 +349,71 @@ public class TeamService {
 		return resultLines;
 	}
 
-	private static List<CSVSignupMember> membersFromSignup(ImportSignupsCommandHandler.SignupCSVLine line) throws Exception {
-		return List.of(
-				new CSVSignupMember(line.getMember1DiscordName(), line.getMember1TrackmaniaName(), factorTrackmaniaUuid(line.getMember1TrackmaniaUserLink()), true),
-				new CSVSignupMember(line.getMember2DiscordName(), line.getMember2TrackmaniaName(), factorTrackmaniaUuid(line.getMember2TrackmaniaUserLink()), false),
-				new CSVSignupMember(line.getMember3DiscordName(), line.getMember3TrackmaniaName(), factorTrackmaniaUuid(line.getMember3TrackmaniaUserLink()), false),
-				new CSVSignupMember(line.getMember4DiscordName(), line.getMember4TrackmaniaName(), factorTrackmaniaUuid(line.getMember4TrackmaniaUserLink()), false),
-				new CSVSignupMember(line.getMember5DiscordName(), line.getMember5TrackmaniaName(), factorTrackmaniaUuid(line.getMember5TrackmaniaUserLink()), false),
-				new CSVSignupMember(line.getMember6DiscordName(), line.getMember6TrackmaniaName(), factorTrackmaniaUuid(line.getMember6TrackmaniaUserLink()), false)
-		);
+	private static List<CSVSignupMember> membersFromSignup(String teamName, List<String> resultLines, ImportSignupsCommandHandler.SignupCSVLine line) throws Exception {
+		List<CSVSignupMember> members = new ArrayList<>();
+		addSignupMember(1, teamName, resultLines, members, line.getMember1DiscordName(), line.getMember1TrackmaniaName(), line.getMember1TrackmaniaUserLink(), true);
+		addSignupMember(2, teamName, resultLines, members, line.getMember2DiscordName(), line.getMember2TrackmaniaName(), line.getMember2TrackmaniaUserLink(), false);
+		addSignupMember(3, teamName, resultLines, members, line.getMember3DiscordName(), line.getMember3TrackmaniaName(), line.getMember3TrackmaniaUserLink(), false);
+		addSignupMember(4, teamName, resultLines, members, line.getMember4DiscordName(), line.getMember4TrackmaniaName(), line.getMember4TrackmaniaUserLink(), false);
+		addSignupMember(5, teamName, resultLines, members, line.getMember5DiscordName(), line.getMember5TrackmaniaName(), line.getMember5TrackmaniaUserLink(), false);
+		addSignupMember(6, teamName, resultLines, members, line.getMember6DiscordName(), line.getMember6TrackmaniaName(), line.getMember6TrackmaniaUserLink(), false);
+		return members;
+	}
+
+	private static void addSignupMember(int number, String teamName, List<String> resultLines, List<CSVSignupMember> members, String discordName, String trackmaniaName, String trackmaniaUuid, boolean captain) throws Exception {
+		discordName = nullifyBlank(discordName);
+		trackmaniaName = nullifyBlank(trackmaniaName);
+		trackmaniaUuid = nullifyBlank(trackmaniaUuid);
+		if (discordName == null || trackmaniaName == null || trackmaniaUuid == null) {
+			// incomplete captain
+			if (captain) {
+				List<String> missingFieldNames = new ArrayList<>();
+				if (discordName == null) {
+					missingFieldNames.add("discord-name");
+				}
+				if (trackmaniaName == null) {
+					missingFieldNames.add("trackmania-name");
+				}
+				if (trackmaniaUuid == null) {
+					missingFieldNames.add("trackmania-uuid");
+				}
+				resultLines.add("Captain sign-up for team \"%s\" not valid - missing: %s".formatted(
+						teamName,
+						String.join(", ", missingFieldNames)
+				));
+				return;
+			}
+			// partially incomplete member
+			if (discordName != null || trackmaniaName != null || trackmaniaUuid != null) {
+				List<String> providedFields = new ArrayList<>();
+				List<String> missingFields = new ArrayList<>();
+				markFieldStatus(providedFields, missingFields, discordName, "discord-name");
+				markFieldStatus(providedFields, missingFields, trackmaniaName, "trackmania-name");
+				markFieldStatus(providedFields, missingFields, trackmaniaUuid, "trackmania-uuid");
+				resultLines.add("Sign-up %d for team \"%s\" has %s but is missing %s".formatted(
+						number, teamName,
+						String.join(", ", providedFields),
+						String.join(", ", missingFields)
+				));
+			}
+			return;
+		}
+		members.add(new CSVSignupMember(discordName, trackmaniaName, factorTrackmaniaUuid(trackmaniaUuid), captain));
+	}
+
+	private static void markFieldStatus(List<String> provided, List<String> missing, String fieldValue, String fieldName) {
+		if (fieldValue == null) {
+			missing.add(fieldName);
+		} else {
+			provided.add(fieldName);
+		}
+	}
+
+	private static String nullifyBlank(String str) {
+		if (str != null && str.isBlank()) {
+			return null;
+		}
+		return str;
 	}
 
 	private static String factorTrackmaniaUuid(String link) throws Exception {

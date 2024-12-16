@@ -55,15 +55,15 @@ public class EventsExportCommand implements ChatCommand {
 				line[0] = team.getName();
 
 				List<JdbcTeamSignup> teamSignups = signups.stream().filter(s -> Objects.equals(s.getTeamId(), team.getId())).toList();
-				if (teamSignups.size() != 6) {
-					errors.add("Team `%s` has %d members".formatted(team.getName(), teamSignups.size()));
+				if (teamSignups.size() < 3 || teamSignups.size() > 6) {
+					errors.add("Team `%s` has %d members (expecting 3-6)".formatted(team.getName(), teamSignups.size()));
 				} else {
 					line[1] = teamSignups.get(0).getTrackmaniaUuid();
 					line[2] = teamSignups.get(1).getTrackmaniaUuid();
 					line[3] = teamSignups.get(2).getTrackmaniaUuid();
-					line[4] = teamSignups.get(3).getTrackmaniaUuid();
-					line[5] = teamSignups.get(4).getTrackmaniaUuid();
-					line[6] = teamSignups.get(5).getTrackmaniaUuid();
+					line[4] = teamSignups.size() >= 4 ? teamSignups.get(3).getTrackmaniaUuid() : "";
+					line[5] = teamSignups.size() >= 5 ? teamSignups.get(4).getTrackmaniaUuid() : "";
+					line[6] = teamSignups.size() >= 6 ? teamSignups.get(5).getTrackmaniaUuid() : "";
 					w.writeNext(line);
 				}
 			});
