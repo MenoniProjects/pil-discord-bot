@@ -1,6 +1,7 @@
 package net.menoni.pil.bot.jdbc.repository;
 
 import net.dv8tion.jda.api.entities.Member;
+import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.jdbc.model.JdbcTeamSignup;
 import net.menoni.spring.commons.jdbc.AbstractTypeRepository;
 import net.menoni.spring.commons.util.NullableMap;
@@ -72,4 +73,7 @@ public class TeamSignupRepository extends AbstractTypeRepository<JdbcTeamSignup>
 		return this.queryMany("SELECT id, team_id, discord_name, trackmania_name, trackmania_uuid, team_lead FROM team_signup");
 	}
 
+	public void deleteSignupsForTeam(Long teamId) {
+		this.update("DELETE FROM team_signup WHERE team_id = :id", Map.of("id", teamId));
+	}
 }

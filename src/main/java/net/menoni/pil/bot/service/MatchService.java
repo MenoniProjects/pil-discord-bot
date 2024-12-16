@@ -99,4 +99,7 @@ public class MatchService {
 		}
 	}
 
+	public List<JdbcMatch> getMatchesForTeam(Long teamId) {
+		return this.matchRepository.findMatchesForTeam(teamId);
+	}
 }

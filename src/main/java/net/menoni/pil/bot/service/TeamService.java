@@ -53,6 +53,11 @@ public class TeamService {
 		return this.getTeamById(signup.getTeamId());
 	}
 
+	public void deleteTeam(JdbcTeam team) {
+		this.teamSignupRepository.deleteSignupsForTeam(team.getId());
+		this.teamRepository.deleteTeam(bot, team);
+	}
+
 	public List<JdbcTeamSignup> getAllSignups() {
 		return teamSignupRepository.getAllSignups();
 	}
@@ -442,7 +447,11 @@ public class TeamService {
 	}
 
 	public void updateTeamDiv(JdbcTeam team, int division) {
-		team.setDivision(division);
+		if (division > 0) {
+			team.setDivision(division);
+		} else {
+			team.setDivision(null);
+		}
 		this.teamRepository.updateDivision(team);
 	}
 

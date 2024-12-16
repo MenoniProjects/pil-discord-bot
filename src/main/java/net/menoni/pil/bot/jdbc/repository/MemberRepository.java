@@ -68,4 +68,11 @@ public class MemberRepository extends AbstractTypeRepository<JdbcMember> {
                 "SELECT id, discord_id, discord_name, discord_nick, team_id FROM member"
         );
     }
+
+    public void removeTeam(Long teamId) {
+        this.update(
+                "UPDATE member SET team_id = NULL WHERE team_id = :teamId",
+                Map.of("teamId", teamId)
+        );
+    }
 }

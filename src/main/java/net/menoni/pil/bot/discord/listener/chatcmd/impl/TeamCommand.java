@@ -8,17 +8,18 @@ import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.discord.listener.chatcmd.ChatCommand;
+import net.menoni.pil.bot.jdbc.model.JdbcMatch;
 import net.menoni.pil.bot.jdbc.model.JdbcMember;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.jdbc.model.JdbcTeamSignup;
 import net.menoni.pil.bot.jdbc.repository.TeamSignupRepository;
+import net.menoni.pil.bot.service.MatchService;
 import net.menoni.pil.bot.service.MemberService;
 import net.menoni.pil.bot.service.TeamService;
 import net.menoni.pil.bot.util.DiscordArgUtil;
 import net.menoni.pil.bot.util.DiscordFormattingUtil;
 import net.menoni.pil.bot.util.JDAUtil;
 import net.menoni.pil.bot.util.Obj;
-import net.menoni.spring.commons.util.Pair;
 import org.springframework.context.ApplicationContext;
 
 import java.util.*;
@@ -48,6 +49,8 @@ public class TeamCommand implements ChatCommand {
 			return this._execute_div(applicationContext, channel, member, message, alias, args);
 		} else if (args[0].equalsIgnoreCase("emote")) {
 			return this._execute_emote(applicationContext, channel, member, message, alias, args);
+		} else if (args[0].equalsIgnoreCase("delete")) {
+			return this._execute_delete(applicationContext, channel, member, message, alias, args);
 		}
 
 		sendHelp(channel, "invalid action");
@@ -60,8 +63,10 @@ public class TeamCommand implements ChatCommand {
 				"!team -- show help",
 				"!team list -- list all teams",
 				"!team div <division> <team1> [team2...] -- set one or more team divisions",
+				"!team div remove <team1> [team2...] -- remove one or more team divisions",
 				"!team emote <team-role> <emote> -- set team emote",
-				"!team emote <team-role> delete -- remove team emote"
+				"!team emote <team-role> delete -- remove team emote",
+				"!team delete <team-role> -- delete a team fully from the discord and bot DB"
 		);
 	}
 
@@ -125,16 +130,18 @@ public class TeamCommand implements ChatCommand {
 
 		int division = -1;
 
-		try {
-			division = Integer.parseInt(divArgStr);
-		} catch (NumberFormatException e) {
-			reply(channel, "team", "Invalid division number input: " + divArgStr + " -- expected (positive) number");
-			return true;
-		}
+		if (!divArgStr.equalsIgnoreCase("remove")) {
+			try {
+				division = Integer.parseInt(divArgStr);
 
-		if (division < 1 || division > 10) {
-			reply(channel, "team", "Division needs to be between 1-10");
-			return true;
+				if (division < 1 || division > 10) {
+					reply(channel, "team", "Division needs to be between 1-10");
+					return true;
+				}
+			} catch (NumberFormatException e) {
+				reply(channel, "team", "Invalid division number input: " + divArgStr + " -- expected (positive) number");
+				return true;
+			}
 		}
 
 		TeamService teamService = applicationContext.getBean(TeamService.class);
@@ -152,7 +159,11 @@ public class TeamCommand implements ChatCommand {
 				sb.append(s).append(" (error: not a team discord role)\n");
 				continue;
 			}
-			sb.append(s).append(" div updated to **").append(division).append("**\n");
+			if (division > 0) {
+				sb.append(s).append(" div updated to **").append(division).append("**\n");
+			} else {
+				sb.append(s).append(" div removed\n");
+			}
 			teamService.updateTeamDiv(team, division);
 		}
 
@@ -219,6 +230,47 @@ public class TeamCommand implements ChatCommand {
 		}
 
 		teamService.updateTeamsMessage();
+		return true;
+	}
+
+	private boolean _execute_delete(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) {
+		if (args.length < 2) {
+			sendHelp(channel, "Not enough arguments");
+			return true;
+		}
+
+		String roleArg = args[1];
+		String roleId = DiscordArgUtil.getRoleId(roleArg);
+		if (roleId == null) {
+			reply(channel, "team", "Argument is not a role");
+			return true;
+		}
+
+		TeamService teamService = applicationContext.getBean(TeamService.class);
+		JdbcTeam team = teamService.getTeamByRoleId(roleId);
+
+		if (team == null) {
+			reply(channel, "team", "Team not found by requested role: " + roleArg);
+			return true;
+		}
+
+		MatchService matchService = applicationContext.getBean(MatchService.class);
+		List<JdbcMatch> matches = matchService.getMatchesForTeam(team.getId());
+		if (!matches.isEmpty()) {
+			reply(channel, "team", "Team is already linked to match history - ask dev for help");
+			return true;
+		}
+
+		// unlink from members
+		MemberService memberService = applicationContext.getBean(MemberService.class);
+		memberService.removeTeam(team.getId());
+
+		// remove team & signups
+		teamService.deleteTeam(team);
+
+		teamService.updateTeamsMessage();
+
+		reply(channel, "team", "**Deleted team:** " + team.getName());
 		return true;
 	}
 

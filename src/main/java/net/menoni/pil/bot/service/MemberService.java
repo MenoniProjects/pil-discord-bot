@@ -70,4 +70,8 @@ public class MemberService {
 	public List<JdbcMember> getAll() {
 		return this.memberRepository.getAll();
 	}
+
+	public void removeTeam(Long teamId) {
+		this.memberRepository.removeTeam(teamId);
+	}
 }
