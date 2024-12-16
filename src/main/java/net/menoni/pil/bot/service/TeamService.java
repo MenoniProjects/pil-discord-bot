@@ -1,11 +1,13 @@
 package net.menoni.pil.bot.service;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.menoni.pil.bot.discord.DiscordBot;
-import net.menoni.pil.bot.discord.command.impl.ImportSignupsCommandHandler;
 import net.menoni.pil.bot.jdbc.model.JdbcMember;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.jdbc.model.JdbcTeamSignup;
@@ -243,14 +245,19 @@ public class TeamService {
 		}));
 	}
 
-	public List<String> importCsv(List<ImportSignupsCommandHandler.SignupCSVLine> csvLines) {
+	public List<String> importCsv(List<String[]> lines) {
+		List<SignupCSVLine> csvLines = new ArrayList<>();
+		for (String[] line : lines) {
+			csvLines.add(parseLine(line));
+		}
+
 		List<String> resultLines = new ArrayList<>();
-		for (ImportSignupsCommandHandler.SignupCSVLine line : csvLines) {
+		for (SignupCSVLine line : csvLines) {
 			if (csvLines.stream().filter(l -> Objects.equals(l.getTeamName(), line.getTeamName())).count() > 1) {
 				resultLines.add("Multiple teams registered with name **%s**".formatted(line.getTeamName()));
-				List<ImportSignupsCommandHandler.SignupCSVLine> teamsWithSameName = csvLines.stream().filter(l -> Objects.equals(l.getTeamName(), line.getTeamName())).toList();
+				List<SignupCSVLine> teamsWithSameName = csvLines.stream().filter(l -> Objects.equals(l.getTeamName(), line.getTeamName())).toList();
 				for (int i = 0; i < teamsWithSameName.size(); i++) {
-					ImportSignupsCommandHandler.SignupCSVLine renameTeam = teamsWithSameName.get(i);
+					SignupCSVLine renameTeam = teamsWithSameName.get(i);
 					renameTeam.setTeamName(renameTeam.getTeamName() + " (%d)".formatted(i+1));
 				}
 			}
@@ -261,7 +268,7 @@ public class TeamService {
 
 		Set<Long> teamIdsParsed = new HashSet<>();
 
-		for (ImportSignupsCommandHandler.SignupCSVLine signupLine : csvLines) {
+		for (SignupCSVLine signupLine : csvLines) {
 			try {
 				JdbcTeam teamForSignup = existingTeams.stream().filter(e -> Objects.equals(e.getName(), signupLine.getTeamName())).findAny().orElse(null);
 				boolean newTeam = false;
@@ -349,7 +356,7 @@ public class TeamService {
 		return resultLines;
 	}
 
-	private static List<CSVSignupMember> membersFromSignup(String teamName, List<String> resultLines, ImportSignupsCommandHandler.SignupCSVLine line) throws Exception {
+	private static List<CSVSignupMember> membersFromSignup(String teamName, List<String> resultLines, SignupCSVLine line) throws Exception {
 		List<CSVSignupMember> members = new ArrayList<>();
 		addSignupMember(1, teamName, resultLines, members, line.getMember1DiscordName(), line.getMember1TrackmaniaName(), line.getMember1TrackmaniaUserLink(), true);
 		addSignupMember(2, teamName, resultLines, members, line.getMember2DiscordName(), line.getMember2TrackmaniaName(), line.getMember2TrackmaniaUserLink(), false);
@@ -510,4 +517,59 @@ public class TeamService {
 			String trackmaniaUuid,
 			boolean first
 	) { }
+
+	private SignupCSVLine parseLine(String[] line) {
+		return new SignupCSVLine(
+				// 0 = timestamp
+				line[1].trim(),
+				line[2].trim(),
+				line[3].trim(),
+				line[4].trim(),
+				line[5].trim(),
+				line[6].trim(),
+				line[7].trim(),
+				line[8].trim(),
+				line[9].trim(),
+				line[10].trim(),
+				line[11].trim(),
+				line[12].trim(),
+				line[13].trim(),
+				line[14].trim(),
+				line[15].trim(),
+				line[16].trim(),
+				line[17].trim(),
+				line[18].trim(),
+				line[19].trim(),
+				line[20].trim(),
+				line[21].trim()
+		);
+	}
+
+	@Getter
+	@Setter
+	@AllArgsConstructor
+	public static class SignupCSVLine {
+		private String teamName;
+		private String teamColor;
+		private String teamImageUrl;
+		private String member1DiscordName;
+		private String member1TrackmaniaName;
+		private String member1TrackmaniaUserLink;
+		private String member2DiscordName;
+		private String member2TrackmaniaName;
+		private String member2TrackmaniaUserLink;
+		private String member3DiscordName;
+		private String member3TrackmaniaName;
+		private String member3TrackmaniaUserLink;
+		private String member4DiscordName;
+		private String member4TrackmaniaName;
+		private String member4TrackmaniaUserLink;
+		private String member5DiscordName;
+		private String member5TrackmaniaName;
+		private String member5TrackmaniaUserLink;
+		private String member6DiscordName;
+		private String member6TrackmaniaName;
+		private String member6TrackmaniaUserLink;
+	}
+
 }
