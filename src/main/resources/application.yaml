@@ -1,0 +1,16 @@
+pil:
+  bot:
+    startup-test: false
+    version: '@project.version@'
+
+spring:
+  datasource:
+    host: localhost
+    url: jdbc:mysql://${spring.datasource.host}:3306/pil
+    username: pil
+    password: pil
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+logging:
+  level:
+    root: INFO
