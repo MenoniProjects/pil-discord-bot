@@ -36,6 +36,7 @@ public class TeamRepository extends AbstractTypeRepository<JdbcTeam> {
 					g.createRole()
 							.setName(name)
 							.setColor(Color.decode(color))
+							.setHoisted(true)
 							.queue(r -> {
 								JdbcTeam newTeam = new JdbcTeam(null, name, color, imageUrl, r.getId(), null, null, null);
 								GeneratedKeyHolder key = this.insertOne(

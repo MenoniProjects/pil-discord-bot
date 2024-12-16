@@ -13,7 +13,6 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.menoni.pil.bot.discord.DiscordBot;
-import net.menoni.pil.bot.discord.command.impl.*;
 import net.menoni.pil.bot.discord.command.impl.ImportSignupsCommandHandler;
 import net.menoni.pil.bot.discord.command.impl.ParseMatchDumpCommandHandler;
 import net.menoni.spring.commons.util.DiscordTagUtil;

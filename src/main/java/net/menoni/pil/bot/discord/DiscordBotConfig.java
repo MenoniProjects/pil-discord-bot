@@ -16,7 +16,7 @@ public class DiscordBotConfig {
     private Boolean forceUpdateCommands = false;
     private String customBotStatus;
     private String limitInteractionsToMember;
-//    private String memberRoleId;
+//    private String memberRoleId; // disabled
     private String playerRoleId;
     private String teamLeadRoleId;
     private String teamsChannelId;
