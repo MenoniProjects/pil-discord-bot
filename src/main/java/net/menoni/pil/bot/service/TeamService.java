@@ -82,7 +82,7 @@ public class TeamService {
 	}
 
 	public void updateTeamsMessage() {
-		log.error("Scheduling teams-message update");
+		log.info("Scheduling teams-message update");
 		if (updateTeamsMessageTask != null) {
 			updateTeamsMessageTask.cancel(false);
 		}
@@ -350,8 +350,10 @@ public class TeamService {
 
 		// /validations
 
-		this.updateTeamsMessage();
-		new Thread(this::updateMemberRolesAfterCsvImport).start();
+		if (!resultLines.isEmpty()) {
+			this.updateTeamsMessage();
+			new Thread(this::updateMemberRolesAfterCsvImport).start();
+		}
 
 		return resultLines;
 	}

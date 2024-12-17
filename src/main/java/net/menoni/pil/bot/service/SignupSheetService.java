@@ -53,7 +53,7 @@ public class SignupSheetService {
 		try {
 			_runSignupsSheetImport();
 		} catch (IOException | CsvException e) {
-			throw new RuntimeException(e);
+			log.error("scheduled sheet import failed", e);
 		}
 	}
 
@@ -65,6 +65,7 @@ public class SignupSheetService {
 		}
 		List<String> resultLines = teamService.importCsv(lines);
 		if (resultLines.isEmpty()) {
+			log.info("automatic sign-up sheet import finished without changes");
 			return;
 		}
 		TextChannel channel = bot.getTextChannelById(bot.getConfig().getCmdChannelId());
