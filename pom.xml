@@ -6,7 +6,7 @@
 
   <groupId>net.menoni</groupId>
   <artifactId>pil-discord-bot</artifactId>
-  <version>1.4.0</version>
+  <version>1.4.1</version>
 
   <name>pil-discord-bot</name>
 
@@ -28,7 +28,7 @@
     <dependency>
       <groupId>net.menoni</groupId>
       <artifactId>menoni-spring-commons</artifactId>
-      <version>1.4.0</version>
+      <version>1.5.0</version>
     </dependency>
     <!-- menoni jda -->
     <dependency>

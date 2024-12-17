@@ -8,8 +8,8 @@ import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInterac
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
 import net.dv8tion.jda.api.interactions.InteractionHook;
+import net.menoni.commons.util.LoggerTextFormat;
 import net.menoni.pil.bot.discord.DiscordBot;
-import net.menoni.spring.commons.util.LoggerTextFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;

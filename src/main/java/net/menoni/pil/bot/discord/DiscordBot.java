@@ -20,11 +20,30 @@ import java.util.Set;
 @Slf4j
 public class DiscordBot extends AbstractDiscordBot<DiscordBotConfig> {
 
+
     private static final Set<Permission> PERMISSIONS = Set.of(
             Permission.MANAGE_ROLES,
             Permission.MANAGE_CHANNEL,
             Permission.MESSAGE_MANAGE
     );
+    private static final List<GatewayIntent> INTENTS = List.of(
+            GatewayIntent.GUILD_MEMBERS,
+            GatewayIntent.GUILD_MESSAGES,
+            GatewayIntent.MESSAGE_CONTENT,
+            GatewayIntent.GUILD_EMOJIS_AND_STICKERS
+    );
+    private static final List<CacheFlag> ENABLED_CACHES = List.of(
+            CacheFlag.EMOJI
+    );
+    private static final List<CacheFlag> DISABLED_CACHES = List.of(
+            CacheFlag.VOICE_STATE,
+            CacheFlag.STICKER,
+            CacheFlag.CLIENT_STATUS,
+            CacheFlag.SCHEDULED_EVENTS,
+            CacheFlag.ACTIVITY,
+            CacheFlag.ONLINE_STATUS
+    );
+    private static final List<String> REQUIRED_SCOPES = List.of("applications.commands");
 
     public DiscordBot(
             DiscordBotConfig config,
@@ -34,24 +53,10 @@ public class DiscordBot extends AbstractDiscordBot<DiscordBotConfig> {
                 config,
                 autowireCapableBeanFactory,
                 PERMISSIONS,
-                List.of(
-                        GatewayIntent.GUILD_MEMBERS,
-                        GatewayIntent.GUILD_MESSAGES,
-                        GatewayIntent.MESSAGE_CONTENT,
-                        GatewayIntent.GUILD_EMOJIS_AND_STICKERS
-                ),
-                List.of(
-                        CacheFlag.EMOJI
-                ),
-                List.of(
-                        CacheFlag.VOICE_STATE,
-                        CacheFlag.STICKER,
-                        CacheFlag.CLIENT_STATUS,
-                        CacheFlag.SCHEDULED_EVENTS,
-                        CacheFlag.ACTIVITY,
-                        CacheFlag.ONLINE_STATUS
-                ),
-                List.of("applications.commands")
+                INTENTS,
+                ENABLED_CACHES,
+                DISABLED_CACHES,
+                REQUIRED_SCOPES
         );
     }
 
