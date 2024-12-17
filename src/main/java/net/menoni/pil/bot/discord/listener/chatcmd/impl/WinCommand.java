@@ -45,8 +45,8 @@ public class WinCommand implements ChatCommand {
 			reply(channel, alias, "Command needs to be executed in a known match channel");
 			return false;
 		}
-		if (member.getRoles().stream().map(Role::getId).noneMatch(id -> Objects.equals(id, bot.getConfig().getTeamLeadRoleId()))) {
-			reply(channel, alias, "Only team leads can run this command");
+		if (member.getRoles().stream().map(Role::getId).noneMatch(id -> Objects.equals(id, bot.getConfig().getPlayerRoleId()))) {
+			reply(channel, alias, "Only members of a team can run this command");
 			return false;
 		}
 		return true;
@@ -64,8 +64,8 @@ public class WinCommand implements ChatCommand {
 			return true;
 		}
 		// mark win
-		JdbcTeamSignup teamLeadSignup = teamService.getSignupForMember(member);
-		if (teamLeadSignup == null) {
+		JdbcTeamSignup teamMemberSignup = teamService.getSignupForMember(member);
+		if (teamMemberSignup == null) {
 			reply(channel, alias, "Could not find your sign-up entry - <@%s>".formatted(bot.getConfig().getStaffRoleId()));
 			return true;
 		}
@@ -81,13 +81,13 @@ public class WinCommand implements ChatCommand {
 			return true;
 		}
 
-		match.setWinTeamId(teamLeadSignup.getTeamId());
+		match.setWinTeamId(teamMemberSignup.getTeamId());
 		match.setWinTeamScore(parsedMatchScore.winTeamScore());
 		match.setLoseTeamScore(parsedMatchScore.loseTeamScore());
 		matchService.updateMatch(match);
 
-		JdbcTeam winTeam = teamService.getTeamById(teamLeadSignup.getTeamId());
-		JdbcTeam loseTeam = teamService.getTeamById(Objects.equals(teamLeadSignup.getTeamId(), match.getFirstTeamId()) ? match.getSecondTeamId() : match.getFirstTeamId());
+		JdbcTeam winTeam = teamService.getTeamById(teamMemberSignup.getTeamId());
+		JdbcTeam loseTeam = teamService.getTeamById(Objects.equals(teamMemberSignup.getTeamId(), match.getFirstTeamId()) ? match.getSecondTeamId() : match.getFirstTeamId());
 
 		reply(channel, alias, "Marked match as won by %s with result: %s".formatted(
 				DiscordFormattingUtil.roleAsString(winTeam.getDiscordRoleId()),
