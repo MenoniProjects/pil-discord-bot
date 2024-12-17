@@ -4,7 +4,7 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
-import net.menoni.pil.bot.util.JDAUtil;
+import net.menoni.jda.commons.util.JDAUtil;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Collection;

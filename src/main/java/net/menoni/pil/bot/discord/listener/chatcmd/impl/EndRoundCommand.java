@@ -15,7 +15,7 @@ import net.menoni.pil.bot.service.MatchChannelService;
 import net.menoni.pil.bot.service.MatchService;
 import net.menoni.pil.bot.service.TeamService;
 import net.menoni.pil.bot.util.DiscordFormattingUtil;
-import net.menoni.pil.bot.util.JDAUtil;
+import net.menoni.jda.commons.util.JDAUtil;
 import net.menoni.pil.bot.util.RoundType;
 import org.springframework.context.ApplicationContext;
 

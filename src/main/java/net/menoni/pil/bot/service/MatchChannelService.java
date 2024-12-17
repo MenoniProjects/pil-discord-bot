@@ -12,7 +12,7 @@ import net.dv8tion.jda.api.requests.restaction.ChannelAction;
 import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.jdbc.model.JdbcMatch;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
-import net.menoni.pil.bot.util.JDAUtil;
+import net.menoni.jda.commons.util.JDAUtil;
 import net.menoni.pil.bot.util.RoundType;
 import net.menoni.pil.bot.util.TemporaryValue;
 import org.springframework.beans.factory.annotation.Autowired;

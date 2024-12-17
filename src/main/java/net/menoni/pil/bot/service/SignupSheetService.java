@@ -6,7 +6,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.menoni.pil.bot.discord.DiscordBot;
-import net.menoni.pil.bot.util.JDAUtil;
+import net.menoni.jda.commons.util.JDAUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;

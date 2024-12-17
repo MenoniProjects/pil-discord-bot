@@ -2,21 +2,16 @@ package net.menoni.pil.bot.discord;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.menoni.jda.commons.discord.AbstractDiscordBotConfig;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @ConfigurationProperties(prefix = "discord")
 @Getter
 @Setter
-public class DiscordBotConfig {
+public class DiscordBotConfig extends AbstractDiscordBotConfig {
 
-    private String token;
-    private String guildId;
     private String adminChannelId;
-    private Boolean forceUpdateCommands = false;
-    private String customBotStatus;
-    private String limitInteractionsToMember;
-//    private String memberRoleId; // disabled
     private String playerRoleId;
     private String teamLeadRoleId;
     private String teamsChannelId;

@@ -1,7 +1,7 @@
 package net.menoni.pil.bot.discord;
 
 import net.dv8tion.jda.api.entities.Guild;
-import net.menoni.spring.commons.util.LoggerTextFormat;
+import net.menoni.commons.util.LoggerTextFormat;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 
 import java.util.function.Consumer;
@@ -9,8 +9,8 @@ import java.util.function.Function;
 
 public class DiscordBotTest extends DiscordBot {
 
-	public DiscordBotTest(DiscordBotConfig config, AutowireCapableBeanFactory autowireCapableBeanFactory, String pilBotVersion) throws InterruptedException {
-		super(config, autowireCapableBeanFactory, pilBotVersion);
+	public DiscordBotTest(DiscordBotConfig config, AutowireCapableBeanFactory autowireCapableBeanFactory) throws InterruptedException {
+		super(config, autowireCapableBeanFactory);
 	}
 
 	@Override

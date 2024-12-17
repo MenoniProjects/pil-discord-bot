@@ -49,10 +49,9 @@ public class DiscordMemberListener implements EventListener {
         }
         logger.info("Creating new member (join): {}/{}", event.getUser().getId(), event.getUser().getName());
         JdbcMember jdbcMember = memberService.getOrCreateMember(event.getMember());
-        Role memberRole = bot.getMemberRole();
         Role playerRole = bot.getPlayerRole();
         Role teamLeadRole = bot.getTeamLeadRole();
-        teamService.ensurePlayerRoles(event.getMember(), jdbcMember, memberRole, playerRole, teamLeadRole);
+        teamService.ensurePlayerRoles(event.getMember(), jdbcMember, playerRole, teamLeadRole);
     }
 
     private void memberLeaveEvent(GuildMemberRemoveEvent event) {

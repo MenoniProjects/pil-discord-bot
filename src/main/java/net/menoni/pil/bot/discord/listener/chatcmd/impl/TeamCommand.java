@@ -19,7 +19,7 @@ import net.menoni.pil.bot.service.MemberService;
 import net.menoni.pil.bot.service.TeamService;
 import net.menoni.pil.bot.util.DiscordArgUtil;
 import net.menoni.pil.bot.util.DiscordFormattingUtil;
-import net.menoni.pil.bot.util.JDAUtil;
+import net.menoni.jda.commons.util.JDAUtil;
 import net.menoni.pil.bot.util.Obj;
 import org.springframework.context.ApplicationContext;
 

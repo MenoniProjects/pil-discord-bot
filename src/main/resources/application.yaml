@@ -1,4 +1,4 @@
-pil:
+jda:
   bot:
     startup-test: false
     version: '@project.version@'

@@ -444,14 +444,9 @@ public class TeamService {
 		return link;
 	}
 
-	public void ensurePlayerRoles(Member discordMember, JdbcMember botMember, Role memberRole, Role playerRole, Role teamLeadRole) {
+	public void ensurePlayerRoles(Member discordMember, JdbcMember botMember, Role playerRole, Role teamLeadRole) {
 		List<Role> addRoles = new ArrayList<>();
 		List<Role> removeRoles = new ArrayList<>();
-		if (memberRole != null) {
-			if (!DiscordRoleUtil.hasRole(discordMember, memberRole)) {
-				addRoles.add(memberRole);
-			}
-		}
 		if (playerRole != null) {
 			if (DiscordRoleUtil.hasRole(discordMember, playerRole) && botMember.getTeamId() == null) {
 				removeRoles.add(playerRole);
