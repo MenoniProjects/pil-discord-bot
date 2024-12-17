@@ -123,7 +123,7 @@ public class TeamCommand implements ChatCommand {
 
 				if (sortedTeam.getEmoteId() == null || sortedTeam.getEmoteName() == null) {
 					if (sortedTeam.getImageUrl() != null && !sortedTeam.getImageUrl().isBlank()) {
-						sb.append("_emote not set - signup image:_ `").append(sortedTeam.getImageUrl()).append("`\n");
+						sb.append("_emote not set - signup image:_ <").append(sortedTeam.getImageUrl()).append(">\n");
 					} else {
 						sb.append("_emote not set - no image provided_\n");
 					}

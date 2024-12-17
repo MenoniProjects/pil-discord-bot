@@ -70,7 +70,7 @@ public class SignupSheetService {
 		}
 		TextChannel channel = bot.getTextChannelById(bot.getConfig().getCmdChannelId());
 		if (channel != null) {
-			JDAUtil.queueAndWait(channel.sendMessage("automatic hourly import job: " + String.join("\n", resultLines)));
+			JDAUtil.queueAndWait(channel.sendMessage("### automatic hourly import job:\n" + String.join("\n", resultLines)));
 		}
 	}
 
