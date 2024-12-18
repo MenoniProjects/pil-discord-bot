@@ -1,6 +1,7 @@
 package net.menoni.pil.bot.jdbc.repository;
 
 import net.dv8tion.jda.api.entities.Role;
+import net.menoni.jda.commons.util.JDAUtil;
 import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.spring.commons.jdbc.AbstractTypeRepository;
@@ -37,6 +38,7 @@ public class TeamRepository extends AbstractTypeRepository<JdbcTeam> {
 							.setName(name)
 							.setColor(Color.decode(color))
 							.setHoisted(true)
+							.setPermissions(List.of())
 							.queue(r -> {
 								JdbcTeam newTeam = new JdbcTeam(null, name, color, imageUrl, r.getId(), null, null, null);
 								GeneratedKeyHolder key = this.insertOne(
@@ -48,8 +50,24 @@ public class TeamRepository extends AbstractTypeRepository<JdbcTeam> {
 								if (key != null) {
 									newTeam.setId(key.getKey().longValue());
 								}
+
+								// attempt to move role to the bottom of the "-- teams" section
+								String hoistDividerRoleId = bot.getConfig().getBotHoistDividerRoleId();
+								if (hoistDividerRoleId != null) {
+									Role dividerRole = g.getRoleById(hoistDividerRoleId);
+									if (dividerRole != null) {
+										JDAUtil.queueAndWaitConsume(
+												g.modifyRolePositions().selectPosition(r).moveAbove(dividerRole),
+												(_v) -> future.complete(newTeam),
+												future::completeExceptionally
+										);
+										return;
+									}
+								}
+
 								future.complete(newTeam);
-							}, future::completeExceptionally)
+							}, future::completeExceptionally),
+					() -> future.completeExceptionally(new Exception("Guild not found"))
 			);
 		} else {
 			future.complete(team);
