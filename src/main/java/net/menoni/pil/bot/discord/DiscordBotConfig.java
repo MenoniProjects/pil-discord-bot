@@ -47,4 +47,54 @@ public class DiscordBotConfig extends AbstractDiscordBotConfig {
         };
     }
 
+    private String teamCaptainDivRole1;
+    private String teamCaptainDivRole2;
+    private String teamCaptainDivRole3;
+    private String teamCaptainDivRole4;
+    private String teamCaptainDivRole5;
+    private String teamCaptainDivRole6;
+    private String teamCaptainDivRole7;
+    private String teamCaptainDivRole8;
+    private String teamCaptainDivRole9;
+
+    public String getTeamCaptainDivRole(int division) {
+        return switch (division) {
+            case 1 -> teamCaptainDivRole1;
+            case 2 -> teamCaptainDivRole2;
+            case 3 -> teamCaptainDivRole3;
+            case 4 -> teamCaptainDivRole4;
+            case 5 -> teamCaptainDivRole5;
+            case 6 -> teamCaptainDivRole6;
+            case 7 -> teamCaptainDivRole7;
+            case 8 -> teamCaptainDivRole8;
+            case 9 -> teamCaptainDivRole9;
+            default -> null;
+        };
+    }
+
+    private String teamMemberDivRole1;
+    private String teamMemberDivRole2;
+    private String teamMemberDivRole3;
+    private String teamMemberDivRole4;
+    private String teamMemberDivRole5;
+    private String teamMemberDivRole6;
+    private String teamMemberDivRole7;
+    private String teamMemberDivRole8;
+    private String teamMemberDivRole9;
+
+    public String getTeamMemberDivRole(int division) {
+        return switch (division) {
+            case 1 -> teamMemberDivRole1;
+            case 2 -> teamMemberDivRole2;
+            case 3 -> teamMemberDivRole3;
+            case 4 -> teamMemberDivRole4;
+            case 5 -> teamMemberDivRole5;
+            case 6 -> teamMemberDivRole6;
+            case 7 -> teamMemberDivRole7;
+            case 8 -> teamMemberDivRole8;
+            case 9 -> teamMemberDivRole9;
+            default -> null;
+        };
+    }
+
 }

@@ -59,6 +59,10 @@ public class MemberService {
 		return jdbcMember;
 	}
 
+	public List<JdbcMember> getForTeam(Long teamId) {
+		return this.memberRepository.getMembersByTeam(teamId);
+	}
+
 	public void deleteMember(String id) {
 		this.memberRepository.deleteMember(id);
 	}
@@ -74,4 +78,5 @@ public class MemberService {
 	public void removeTeam(Long teamId) {
 		this.memberRepository.removeTeam(teamId);
 	}
+
 }

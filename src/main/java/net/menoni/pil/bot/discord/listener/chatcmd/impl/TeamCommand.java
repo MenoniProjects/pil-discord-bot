@@ -1,6 +1,8 @@
 package net.menoni.pil.bot.discord.listener.chatcmd.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Role;
@@ -26,6 +28,7 @@ import org.springframework.context.ApplicationContext;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class TeamCommand implements ChatCommand {
 	@Override
 	public Collection<String> names() {
@@ -160,6 +163,8 @@ public class TeamCommand implements ChatCommand {
 
 		TeamService teamService = applicationContext.getBean(TeamService.class);
 
+		Set<Long> teamIds = new HashSet<>();
+
 		StringBuilder sb = new StringBuilder("**Updating Team Divisions:**\n");
 		for (String s : teamArgsStr) {
 			String roleId = DiscordArgUtil.getRoleId(s);
@@ -173,6 +178,7 @@ public class TeamCommand implements ChatCommand {
 				sb.append(s).append(" (error: not a team discord role)\n");
 				continue;
 			}
+			teamIds.add(team.getId());
 			if (division > 0) {
 				sb.append(s).append(" div updated to **").append(division).append("**\n");
 			} else {
@@ -183,6 +189,48 @@ public class TeamCommand implements ChatCommand {
 
 		reply(channel, "team", sb.toString());
 		teamService.updateTeamsMessage();
+
+		DiscordBot bot = applicationContext.getBean(DiscordBot.class);
+		MemberService memberService = applicationContext.getBean(MemberService.class);
+		Guild g = bot.applyGuild(_g -> _g, null);
+
+		Role playerRole = bot.getPlayerRole();
+		Role teamLeadRole = bot.getTeamLeadRole();
+
+		int checkedMemberCount = 0;
+		int updatedMembersCount = 0;
+
+		if (g != null) {
+			for (Long teamId : teamIds) {
+				List<JdbcMember> teamMembers = memberService.getForTeam(teamId);
+				if (teamMembers == null) {
+					continue;
+				}
+				List<String> memberIds = teamMembers.stream().map(JdbcMember::getDiscordId).toList();
+				JDAUtil.MemberRetrieveResult discordMembersResult = JDAUtil.getMembersFastSync(g, memberIds);
+				if (discordMembersResult.error() != null) {
+					log.error("Failed to retrieve members", discordMembersResult.error());
+				}
+				if (discordMembersResult.result().isEmpty()) {
+					continue;
+				}
+
+				for (Member discordMember : discordMembersResult.result()) {
+					JdbcMember botMember = teamMembers.stream().filter(tm -> Objects.equals(tm.getDiscordId(), discordMember.getId())).findAny().orElse(null);
+					if (botMember != null) {
+						checkedMemberCount++;
+						if (teamService.ensurePlayerRoles(discordMember, botMember, playerRole, teamLeadRole)) {
+							updatedMembersCount++;
+						}
+					}
+				}
+			}
+		}
+
+		if (checkedMemberCount > 0) {
+			reply(channel, "team", "Finished validating %d member's roles, updated %d members".formatted(checkedMemberCount, updatedMembersCount));
+		}
+
 		return true;
 	}
 

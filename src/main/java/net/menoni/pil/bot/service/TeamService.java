@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.menoni.jda.commons.util.JDAUtil;
 import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.jdbc.model.JdbcMember;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
@@ -170,6 +171,8 @@ public class TeamService {
 	private void updateMemberRolesAfterCsvImport() {
 		Role playerRole = bot.getPlayerRole();
 		Role teamLeadRole = bot.getTeamLeadRole();
+		Set<Role> teamCaptainDivRoles = getTeamCaptainDivRoles();
+		Set<Role> teamMemberDivRoles = getTeamMemberDivRoles();
 		bot.withGuild(g -> g.loadMembers().onSuccess(members -> {
 			List<JdbcTeamSignup> allSignups = this.teamSignupRepository.getAllSignups();
 			List<JdbcTeam> allTeams = this.teamRepository.getAll();
@@ -205,6 +208,56 @@ public class TeamService {
 					if (signup.isTeamLead() && !DiscordRoleUtil.hasRole(member, teamLeadRole)) {
 						rolesToAdd.add(teamLeadRole);
 					}
+
+					allTeams.stream().filter(t -> Objects.equals(t.getId(), signup.getTeamId())).findAny().ifPresent((playerTeam) -> {
+						if (playerTeam.getDivision() == null) {
+							// no team division so remove any of the roles
+							for (Role teamMemberDivRole : teamMemberDivRoles) {
+								if (DiscordRoleUtil.hasRole(member, teamMemberDivRole)) {
+									rolesToRemove.add(teamMemberDivRole);
+								}
+							}
+							for (Role teamCaptainDivRole : teamCaptainDivRoles) {
+								if (DiscordRoleUtil.hasRole(member, teamCaptainDivRole)) {
+									rolesToRemove.add(teamCaptainDivRole);
+								}
+							}
+						} else {
+							// make set of any roles the user should not have, start with all roles
+							Set<Role> possibleRemoveRoles = new HashSet<>(teamCaptainDivRoles);
+							possibleRemoveRoles.addAll(teamMemberDivRoles);
+
+							// find role they need to have, make sure that one isn't removed
+							Role teamDivMemberRole = getTeamMemberDivRole(playerTeam.getDivision());
+							if (teamDivMemberRole != null) {
+								possibleRemoveRoles.remove(teamDivMemberRole);
+
+								// ensure player has team-div-n role
+								if (!DiscordRoleUtil.hasRole(member, teamDivMemberRole)) {
+									rolesToAdd.add(teamDivMemberRole);
+								}
+							}
+
+							// find captain role they may need to have if they are captain, and do the same
+							if (signup.isTeamLead()) {
+								Role teamDivCaptainRole = getTeamCaptainDivRole(playerTeam.getDivision());
+								if (teamDivCaptainRole != null) {
+									possibleRemoveRoles.remove(teamDivCaptainRole);
+
+									if (!DiscordRoleUtil.hasRole(member, teamDivCaptainRole)) {
+										rolesToAdd.add(teamDivCaptainRole);
+									}
+								}
+							}
+
+							// check any of the other div-member/div-captain roles they should not have
+							for (Role possibleRemoveRole : possibleRemoveRoles) {
+								if (DiscordRoleUtil.hasRole(member, possibleRemoveRole)) {
+									rolesToRemove.add(possibleRemoveRole);
+								}
+							}
+						}
+					});
 				} else {
 					if (jdbcMember.getTeamId() != null) {
 						jdbcMember.setTeamId(null);
@@ -215,6 +268,16 @@ public class TeamService {
 					}
 					if (DiscordRoleUtil.hasRole(member, teamLeadRole)) {
 						rolesToRemove.add(teamLeadRole);
+					}
+					for (Role teamMemberDivRole : teamMemberDivRoles) {
+						if (DiscordRoleUtil.hasRole(member, teamMemberDivRole)) {
+							rolesToRemove.add(teamMemberDivRole);
+						}
+					}
+					for (Role teamCaptainDivRole : teamCaptainDivRoles) {
+						if (DiscordRoleUtil.hasRole(member, teamCaptainDivRole)) {
+							rolesToRemove.add(teamCaptainDivRole);
+						}
 					}
 				}
 
@@ -444,7 +507,7 @@ public class TeamService {
 		return link;
 	}
 
-	public void ensurePlayerRoles(Member discordMember, JdbcMember botMember, Role playerRole, Role teamLeadRole) {
+	public boolean ensurePlayerRoles(Member discordMember, JdbcMember botMember, Role playerRole, Role teamLeadRole) {
 		List<Role> addRoles = new ArrayList<>();
 		List<Role> removeRoles = new ArrayList<>();
 		if (playerRole != null) {
@@ -454,9 +517,9 @@ public class TeamService {
 				addRoles.add(playerRole);
 			}
 		}
+		JdbcTeamSignup signupForMember = teamSignupRepository.getSignupForMember(discordMember);
+		boolean isTeamLead = signupForMember != null && signupForMember.isTeamLead();
 		if (teamLeadRole != null) {
-			JdbcTeamSignup signupForMember = teamSignupRepository.getSignupForMember(discordMember);
-			boolean isTeamLead = signupForMember != null && signupForMember.isTeamLead();
 			if (DiscordRoleUtil.hasRole(discordMember, teamLeadRole) && !isTeamLead) {
 				removeRoles.add(teamLeadRole);
 			} else if (!DiscordRoleUtil.hasRole(discordMember, teamLeadRole) && isTeamLead) {
@@ -479,13 +542,52 @@ public class TeamService {
 				}
 			}
 		}
+		Set<Role> teamMemberDivRoles = getTeamMemberDivRoles();
+		Set<Role> teamCaptainDivRoles = getTeamCaptainDivRoles();
+		Set<Role> allTeamDivRoles = new HashSet<>(teamMemberDivRoles);
+		allTeamDivRoles.addAll(teamCaptainDivRoles);
+		// start with assumption they should not have any of these roles
+		// remove roles from the set that they should have, and check if they need to be given
+		if (botMember.getTeamId() != null) {
+			JdbcTeam playerTeam = teams.stream().filter(t -> Objects.equals(t.getId(), botMember.getTeamId())).findAny().orElse(null);
+			if (playerTeam != null && playerTeam.getDivision() != null) {
+				// member check
+				Role teamMemberDivRole = getTeamMemberDivRole(playerTeam.getDivision());
+				if (teamMemberDivRole != null) {
+					allTeamDivRoles.remove(teamMemberDivRole);
+					if (!DiscordRoleUtil.hasRole(discordMember, teamMemberDivRole)) {
+						addRoles.add(teamMemberDivRole);
+					}
+				}
+
+				// captain check
+				if (isTeamLead) {
+					Role teamCaptainDivRole = getTeamCaptainDivRole(playerTeam.getDivision());
+					if (teamCaptainDivRole != null) {
+						allTeamDivRoles.remove(teamCaptainDivRole);
+						if (!DiscordRoleUtil.hasRole(discordMember, teamCaptainDivRole)) {
+							addRoles.add(teamCaptainDivRole);
+						}
+					}
+				}
+			}
+		}
+		// any roles still in allTeamDivRoles are ones the player should not have -- check if need to remove
+		for (Role allTeamDivRole : allTeamDivRoles) {
+			if (DiscordRoleUtil.hasRole(discordMember, allTeamDivRole)) {
+				removeRoles.add(allTeamDivRole);
+			}
+		}
+
 		if (!addRoles.isEmpty() || !removeRoles.isEmpty()) {
-			discordMember.getGuild().modifyMemberRoles(
+			JDAUtil.queueAndWait(discordMember.getGuild().modifyMemberRoles(
 					discordMember,
 					addRoles,
 					removeRoles
-			).queue();
+			));
+			return true;
 		}
+		return false;
 	}
 
 	public JdbcTeam updateTeamEmote(JdbcTeam team, DiscordArgUtil.ParsedEmote emoji) {
@@ -506,6 +608,56 @@ public class TeamService {
 			team.setDivision(null);
 		}
 		this.teamRepository.updateDivision(team);
+	}
+
+	private Set<Role> getTeamMemberDivRoles() {
+		Set<Role> roleSet = new HashSet<>();
+		for (int i = 1; i < 10; i++) {
+			String roleId = bot.getConfig().getTeamMemberDivRole(i);
+			if (roleId != null) {
+				Role role = bot.getRoleById(roleId);
+				if (role != null) {
+					roleSet.add(role);
+				}
+			}
+		}
+		return roleSet;
+	}
+
+	private Set<Role> getTeamCaptainDivRoles() {
+		Set<Role> roleSet = new HashSet<>();
+		for (int i = 1; i < 10; i++) {
+			String roleId = bot.getConfig().getTeamCaptainDivRole(i);
+			if (roleId != null) {
+				Role role = bot.getRoleById(roleId);
+				if (role != null) {
+					roleSet.add(role);
+				}
+			}
+		}
+		return roleSet;
+	}
+
+	private Role getTeamMemberDivRole(int division) {
+		String roleId = bot.getConfig().getTeamMemberDivRole(division);
+		if (roleId != null) {
+			Role role = bot.getRoleById(roleId);
+			if (role != null) {
+				return role;
+			}
+		}
+		return null;
+	}
+
+	private Role getTeamCaptainDivRole(int division) {
+		String roleId = bot.getConfig().getTeamMemberDivRole(division);
+		if (roleId != null) {
+			Role role = bot.getRoleById(roleId);
+			if (role != null) {
+				return role;
+			}
+		}
+		return null;
 	}
 
 	private record CSVSignupMember(
