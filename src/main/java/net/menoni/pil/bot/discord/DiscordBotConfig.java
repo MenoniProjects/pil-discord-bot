@@ -4,8 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import net.menoni.jda.commons.discord.AbstractDiscordBotConfig;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
+@SuppressWarnings("DuplicatedCode")
 @ConfigurationProperties(prefix = "discord")
 @Getter
 @Setter

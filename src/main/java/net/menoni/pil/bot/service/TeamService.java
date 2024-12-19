@@ -302,7 +302,7 @@ public class TeamService {
 
 				if (update) {
 					memberService.updateMember(jdbcMember);
-					try { Thread.sleep(1000); } catch (InterruptedException e) { }
+					try { Thread.sleep(1000); } catch (InterruptedException ignored) { }
 				}
 			}
 		}));
@@ -381,7 +381,7 @@ public class TeamService {
 				teamIdsParsed.add(teamForSignup.getId());
 			} catch (Exception e) {
 				resultLines.add(String.format("Failed parsing members for team `%s`: %s", signupLine.getTeamName(), e.getMessage()));
-				log.error("Failed parsing members for team " + signupLine.getTeamName(), e);
+				log.error("Failed parsing members for team %s".formatted(signupLine.getTeamName()), e);
 			}
 		}
 
@@ -572,7 +572,7 @@ public class TeamService {
 				}
 			}
 		}
-		// any roles still in allTeamDivRoles are ones the player should not have -- check if need to remove
+		// any roles still in allTeamDivRoles are ones the player should not have -- check if it needs to be removed
 		for (Role allTeamDivRole : allTeamDivRoles) {
 			if (DiscordRoleUtil.hasRole(discordMember, allTeamDivRole)) {
 				removeRoles.add(allTeamDivRole);
@@ -641,10 +641,7 @@ public class TeamService {
 	private Role getTeamMemberDivRole(int division) {
 		String roleId = bot.getConfig().getTeamMemberDivRole(division);
 		if (roleId != null) {
-			Role role = bot.getRoleById(roleId);
-			if (role != null) {
-				return role;
-			}
+			return bot.getRoleById(roleId);
 		}
 		return null;
 	}
@@ -652,10 +649,7 @@ public class TeamService {
 	private Role getTeamCaptainDivRole(int division) {
 		String roleId = bot.getConfig().getTeamMemberDivRole(division);
 		if (roleId != null) {
-			Role role = bot.getRoleById(roleId);
-			if (role != null) {
-				return role;
-			}
+			return bot.getRoleById(roleId);
 		}
 		return null;
 	}
