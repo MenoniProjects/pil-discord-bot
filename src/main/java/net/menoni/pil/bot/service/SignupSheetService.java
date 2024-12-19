@@ -57,6 +57,21 @@ public class SignupSheetService {
 		}
 	}
 
+	public List<String> runManualSignupSheetImport() throws IOException, CsvException {
+		List<String[]> lines = getSignupsCsv();
+		List<String> result = new ArrayList<>();
+		if (lines == null) {
+			result.add("automatic sign-up sheet import aborted - no sheet contents");
+			return result;
+		}
+		List<String> resultLines = teamService.importCsv(lines);
+		if (resultLines.isEmpty()) {
+			result.add("automatic sign-up sheet import finished without changes");
+			return result;
+		}
+		return resultLines;
+	}
+
 	private void _runSignupsSheetImport() throws IOException, CsvException {
 		List<String[]> lines = getSignupsCsv();
 		if (lines == null) {
