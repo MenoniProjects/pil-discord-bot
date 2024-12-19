@@ -108,38 +108,63 @@ public class TeamService {
 
 		List<JdbcTeamSignup> allSignups = this.teamSignupRepository.getAllSignups();
 
-		List<String> messageLines = new ArrayList<>();
+		List<List<String>> messages = new ArrayList<>();
 
 		if (!divTeams.isEmpty()) {
+			List<String> messageLines = new ArrayList<>();
 			int currentDiv = 0;
 			for (JdbcTeam team : divTeams) {
 				if (team.getDivision() != currentDiv) {
 					currentDiv = team.getDivision();
+					if (!messageLines.isEmpty()) {
+						messages.add(messageLines);
+					}
+					messageLines = new ArrayList<>();
 					messageLines.add("# Division %d".formatted(currentDiv));
 				}
 
 				printTeam(messageLines, team, allSignups);
 			}
+			if (!messageLines.isEmpty()) {
+				messages.add(messageLines);
+			}
 		}
 
 		if (!noDivTeams.isEmpty()) {
+			List<String> messageLines = new ArrayList<>();
 			messageLines.add("# Signed-up Teams");
 
+			int i = 0;
 			for (JdbcTeam team : noDivTeams) {
 				printTeam(messageLines, team, allSignups);
+				i++;
+				if (i % 10 == 0) {
+					if (!messageLines.isEmpty()) {
+						messages.add(messageLines);
+						messageLines = new ArrayList<>();
+					}
+				}
+			}
+			if (!messageLines.isEmpty()) {
+				messages.add(messageLines);
 			}
 		}
 
 		if (allTeams.isEmpty()) {
-			messageLines.add("_No signups yet_");
+			messages.add(List.of("_No signups yet_"));
 		}
 
-		systemMessageService.setSystemMessage(
-				"teams",
-				teamsChannel.getId(),
-				m -> m.editMessage(String.join("\n", messageLines)),
-				t -> t.sendMessage(String.join("\n", messageLines))
-		);
+		for (int i = 0; i < messages.size(); i++) {
+			List<String> messageLines = messages.get(i);
+			systemMessageService.setIndexableSystemMessage(
+					"teams",
+					i+1,
+					teamsChannel.getId(),
+					m -> m.editMessage(String.join("\n", messageLines)),
+					t -> t.sendMessage(String.join("\n", messageLines))
+			);
+		}
+		systemMessageService.deleteFurtherIndexedMessages("teams", messages.size()+1);
 	}
 
 	private void printTeam(List<String> messageLines, JdbcTeam team, List<JdbcTeamSignup> allSignups) {

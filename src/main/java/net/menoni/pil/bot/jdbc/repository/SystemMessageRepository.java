@@ -5,6 +5,7 @@ import net.menoni.spring.commons.jdbc.AbstractTypeRepository;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Map;
 
 @Repository
@@ -35,6 +36,20 @@ public class SystemMessageRepository extends AbstractTypeRepository<JdbcSystemMe
 		this.update(
 				"DELETE FROM system_message WHERE channel_id = :channelId AND message_id = :messageId",
 				Map.of("channelId", channelId, "messageId", messageId)
+		);
+	}
+
+	public List<JdbcSystemMessage> getIndexedSystemMessages(String key) {
+		return this.queryMany(
+				"SELECT * FROM system_message WHERE `key` LIKE ?",
+				"%s_%%".formatted(key)
+		);
+	}
+
+	public void deleteInstance(Long messageId) {
+		this.update(
+				"DELETE FROM system_message WHERE id = :id",
+				Map.of("id", messageId)
 		);
 	}
 
