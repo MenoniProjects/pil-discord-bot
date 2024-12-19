@@ -21,6 +21,7 @@ public class DiscordBotConfig extends AbstractDiscordBotConfig {
     private String cmdChannelId;
     private String botLogsChannelId;
     private String botHoistDividerRoleId;
+    private String teamsDividerRoleId;
 
     private String matchesCategoryId1;
     private String matchesCategoryId2;

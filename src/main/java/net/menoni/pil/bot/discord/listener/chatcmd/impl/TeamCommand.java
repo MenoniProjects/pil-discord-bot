@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
+import net.dv8tion.jda.api.requests.restaction.order.RoleOrderAction;
 import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.discord.emote.Emotable;
 import net.menoni.pil.bot.discord.listener.chatcmd.ChatCommand;
@@ -22,6 +23,7 @@ import net.menoni.pil.bot.service.TeamService;
 import net.menoni.pil.bot.util.DiscordArgUtil;
 import net.menoni.pil.bot.util.DiscordFormattingUtil;
 import net.menoni.jda.commons.util.JDAUtil;
+import net.menoni.pil.bot.util.DiscordRoleUtil;
 import net.menoni.pil.bot.util.Obj;
 import org.springframework.context.ApplicationContext;
 
@@ -55,6 +57,8 @@ public class TeamCommand implements ChatCommand {
 			return this._execute_emote(applicationContext, channel, member, message, alias, args);
 		} else if (args[0].equalsIgnoreCase("delete")) {
 			return this._execute_delete(applicationContext, channel, member, message, alias, args);
+		} else if (args[0].equalsIgnoreCase("sort")) {
+			return this._execute_sort(applicationContext, channel, member, message, alias, args);
 		}
 
 		sendHelp(channel, "invalid action");
@@ -70,7 +74,8 @@ public class TeamCommand implements ChatCommand {
 				"!team div remove <team1> [team2...] -- remove one or more team divisions",
 				"!team emote <team-role> <emote> -- set team emote",
 				"!team emote <team-role> delete -- remove team emote",
-				"!team delete <team-role> -- delete a team fully from the discord and bot DB"
+				"!team delete <team-role> -- delete a team fully from the discord and bot DB",
+				"!team sort -- re-order all teams alphabetically"
 		);
 	}
 
@@ -333,6 +338,36 @@ public class TeamCommand implements ChatCommand {
 		teamService.updateTeamsMessage();
 
 		reply(channel, "team", "**Deleted team:** " + team.getName());
+		return true;
+	}
+
+	private boolean _execute_sort(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) {
+		TeamService teamService = applicationContext.getBean(TeamService.class);
+		DiscordBot bot = applicationContext.getBean(DiscordBot.class);
+
+		List<String> teamDiscordRoleIds = teamService.getAllTeams().stream().map(JdbcTeam::getDiscordRoleId).toList();
+
+		Guild g = channel.getGuild();
+		Role aboveRole = bot.getRoleById(bot.getConfig().getTeamsDividerRoleId());
+
+		List<Role> teamRoles = new ArrayList<>(bot.getGuildRoles(teamDiscordRoleIds));
+		teamRoles.sort(Comparator.comparing(Role::getName));
+		RoleOrderAction action = DiscordRoleUtil.createRoleOrderForRangeAction(g, aboveRole, teamRoles);
+
+		if (action == null) {
+			reply(channel, alias, "Failed to perform sort action");
+			return true;
+		}
+
+		JDAUtil.queueAndWaitConsume(action, (_v) -> {
+			reply(channel, alias, "Teams have been sorted alphabetically");
+		}, (err) -> {
+			reply(channel, alias, "Failed to perform sort action\n%s: %s".formatted(
+					err.getClass().getName(),
+					err.getMessage()
+			));
+		});
+
 		return true;
 	}
 
