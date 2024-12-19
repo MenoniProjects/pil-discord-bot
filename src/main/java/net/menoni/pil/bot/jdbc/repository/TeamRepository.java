@@ -61,6 +61,7 @@ public class TeamRepository extends AbstractTypeRepository<JdbcTeam> {
 												(_v) -> future.complete(newTeam),
 												future::completeExceptionally
 										);
+										future.complete(newTeam);
 										return;
 									}
 								}
