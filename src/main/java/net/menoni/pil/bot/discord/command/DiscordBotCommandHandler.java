@@ -16,6 +16,7 @@ import net.menoni.jda.commons.util.DiscordTagUtil;
 import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.discord.command.impl.ImportSignupsCommandHandler;
 import net.menoni.pil.bot.discord.command.impl.ParseMatchDumpCommandHandler;
+import net.menoni.pil.bot.discord.command.impl.WinCommandHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +38,11 @@ public class DiscordBotCommandHandler implements EventListener {
             Commands.slash("parsematchdump", "Parse Match dump from CSV")
                     .setGuildOnly(true)
                     .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_ROLES))
-                    .addOption(OptionType.ATTACHMENT, "csv", "Match dump CSV file", true)
+                    .addOption(OptionType.ATTACHMENT, "csv", "Match dump CSV file", true),
+            Commands.slash("win", "Submit your win and score for this match")
+                    .setGuildOnly(true)
+                    .setDefaultPermissions(DefaultMemberPermissions.ENABLED)
+                    .addOption(OptionType.STRING, "score", "The match score or ff", true, true)
     ).collect(Collectors.toMap(
             c -> c.getType().name() + ":" + c.getName(),
             c -> c
@@ -53,7 +58,8 @@ public class DiscordBotCommandHandler implements EventListener {
         this.bot.addEventListener(this);
         this.commandHandlers = Stream.of(
                 new ImportSignupsCommandHandler(),
-                new ParseMatchDumpCommandHandler()
+                new ParseMatchDumpCommandHandler(),
+                new WinCommandHandler()
         ).collect(Collectors.toMap(CommandHandler::getCommandName, c -> c));
         this.commandHandlers.values().forEach(this.bot::autowire);
         this.ensureCommands();

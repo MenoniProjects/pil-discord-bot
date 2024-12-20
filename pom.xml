@@ -6,7 +6,7 @@
 
   <groupId>net.menoni</groupId>
   <artifactId>pil-discord-bot</artifactId>
-  <version>1.7.3</version>
+  <version>1.8.0</version>
 
   <name>pil-discord-bot</name>
 
@@ -23,7 +23,7 @@
     <java.version>17</java.version>
     <!-- dependency versions -->
     <menoni.spring.commons.version>1.5.2</menoni.spring.commons.version>
-    <menoni.jda.commons.version>5.2.1_7</menoni.jda.commons.version>
+    <menoni.jda.commons.version>5.2.1_9</menoni.jda.commons.version>
     <guava.version>33.4.0-jre</guava.version>
     <opencsv.version>5.9</opencsv.version>
     <junit.version>4.13.2</junit.version>
