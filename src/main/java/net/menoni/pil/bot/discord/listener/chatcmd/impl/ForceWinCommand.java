@@ -31,7 +31,7 @@ public class ForceWinCommand implements ChatCommand {
 
 	@Override
 	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) {
-		return ChatCommandListener.requireBotCmdChannel(applicationContext, channel);
+		return ChatCommandListener.requireBotCmdChannelOrMatchChannel(applicationContext, channel);
 	}
 
 	@Override
