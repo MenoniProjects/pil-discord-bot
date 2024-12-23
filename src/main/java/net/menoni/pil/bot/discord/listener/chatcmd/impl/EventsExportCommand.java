@@ -77,7 +77,7 @@ public class EventsExportCommand implements ChatCommand {
 
 			channel
 					.sendMessage("Created trackmania.events teams CSV")
-					.addFiles(FileUpload.fromData(fileBytes.toByteArray(), "pil_nations_teams_%d.csv".formatted(System.currentTimeMillis())))
+					.addFiles(FileUpload.fromData(fileBytes.toByteArray(), "pil_teams_%d.csv".formatted(System.currentTimeMillis())))
 					.queue();
 		} catch (IOException e) {
 			log.error("Failed to write trackmania.events CSV", e);

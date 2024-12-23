@@ -1,5 +1,6 @@
 package net.menoni.pil.bot.discord.listener.chatcmd.impl;
 
+import com.opencsv.CSVWriter;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
@@ -9,6 +10,7 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.requests.restaction.order.RoleOrderAction;
+import net.dv8tion.jda.api.utils.FileUpload;
 import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.discord.emote.Emotable;
 import net.menoni.pil.bot.discord.emote.StandardEmoji;
@@ -29,6 +31,9 @@ import net.menoni.pil.bot.util.DiscordRoleUtil;
 import net.menoni.pil.bot.util.Obj;
 import org.springframework.context.ApplicationContext;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -71,6 +76,8 @@ public class TeamCommand implements ChatCommand {
 			return this._execute_delete(applicationContext, channel, member, message, alias, args);
 		} else if (args[0].equalsIgnoreCase("sort")) {
 			return this._execute_sort(applicationContext, channel, member, message, alias, args);
+		} else if (args[0].equalsIgnoreCase("export")) {
+			return this._execute_export(applicationContext, channel, member, message, alias, args);
 		}
 
 		sendHelp(channel, "invalid action");
@@ -87,7 +94,8 @@ public class TeamCommand implements ChatCommand {
 				"!team emote <team-role> <emote> -- set team emote",
 				"!team emote <team-role> delete -- remove team emote",
 				"!team delete <team-role> -- delete a team fully from the discord and bot DB",
-				"!team sort -- re-order all teams alphabetically"
+				"!team sort -- re-order all teams alphabetically",
+				"!team export -- export CSV of team data for xeru script"
 		);
 	}
 
@@ -380,6 +388,36 @@ public class TeamCommand implements ChatCommand {
 			));
 		});
 
+		return true;
+	}
+
+	private boolean _execute_export(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) {
+		TeamService teamService = applicationContext.getBean(TeamService.class);
+		List<JdbcTeam> teams = teamService.getAllTeams();
+
+		ByteArrayOutputStream fileBytes = new ByteArrayOutputStream();
+		OutputStreamWriter writer = new OutputStreamWriter(fileBytes);
+		try (CSVWriter w = new CSVWriter(writer)) {
+			w.writeNext(new String[] {"seed", "division", "team-id", "team-name"});
+			teams.forEach(team -> {
+				String[] line = new String[4];
+				line[0] = "-1";
+				line[1] = Obj.or(team.getDivision(), -1).toString();
+				line[2] = team.getDiscordRoleId();
+				line[3] = team.getName();
+				w.writeNext(line);
+			});
+
+			writer.flush();
+
+			channel
+					.sendMessage("Created magical xeru teams CSV")
+					.addFiles(FileUpload.fromData(fileBytes.toByteArray(), "pil_teams_xeruformat_%d.csv".formatted(System.currentTimeMillis())))
+					.queue();
+		} catch (IOException e) {
+			log.error("Failed to write trackmania.events CSV", e);
+			reply(channel, alias, "Failed to write trackmania.events CSV");
+		}
 		return true;
 	}
 
