@@ -15,13 +15,13 @@ public interface ChatCommand {
 
 	Collection<Permission> requiredPermissions();
 
+	String shortHelpText();
+
 	boolean execute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args);
 
 	Collection<String> help();
 
-	default boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) {
-		return true;
-	}
+	boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member);
 
 	default void reply(GuildMessageChannelUnion channel, String alias, String message) {
 		try {

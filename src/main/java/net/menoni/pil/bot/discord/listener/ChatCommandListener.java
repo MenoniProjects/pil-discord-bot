@@ -1,6 +1,7 @@
 package net.menoni.pil.bot.discord.listener;
 
 import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
@@ -23,10 +24,12 @@ import java.util.*;
 @Component
 public class ChatCommandListener implements EventListener {
 
-	private final Set<ChatCommand> commands = Set.of(
+	@Getter
+	private final List<ChatCommand> commands = List.of(
 			new EndRoundCommand(),
 			new EventsExportCommand(),
 			new ForceWinCommand(),
+			new HelpCommand(),
 			new MatchChannelCommand(),
 			new MissingPlayersCommand(),
 			new RefreshTeamsCommand(),
@@ -98,11 +101,24 @@ public class ChatCommandListener implements EventListener {
 				return true;
 			}
 		}
-		if (!command.canExecute(applicationContext, channel, member, message, alias, args)) {
+		if (!command.canExecute(applicationContext, channel, member)) {
 			// canExecute is expected to give a no-access reason itself
 			return true;
 		}
 		return command.execute(applicationContext, channel, member, message, alias, args);
+	}
+
+	public boolean checkExecutionPermissionsAndChannel(ChatCommand command, GuildMessageChannelUnion channel, Member member) {
+		Collection<Permission> perms = command.requiredPermissions();
+		if (perms != null && !perms.isEmpty()) {
+			if (!member.hasPermission(perms)) {
+				return false;
+			}
+		}
+		if (!command.canExecute(applicationContext, channel, member)) {
+			return false;
+		}
+		return true;
 	}
 
 	private ChatCommand getCommand(String name) {

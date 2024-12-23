@@ -37,16 +37,21 @@ public class WinCommand implements ChatCommand {
 	}
 
 	@Override
-	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) {
+	public String shortHelpText() {
+		return "Submit score for this match as winner, check if `/win` is available instead";
+	}
+
+	@Override
+	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member) {
 		DiscordBot bot = applicationContext.getBean(DiscordBot.class);
 		MatchService matchService = applicationContext.getBean(MatchService.class);
 		// team lead requirement
 		if (!matchService.isMatchChannel(channel.getId())) {
-			reply(channel, alias, "Command needs to be executed in a known match channel");
+			reply(channel, "win", "Command needs to be executed in a known match channel");
 			return false;
 		}
 		if (member.getRoles().stream().map(Role::getId).noneMatch(id -> Objects.equals(id, bot.getConfig().getPlayerRoleId()))) {
-			reply(channel, alias, "Only members of a team can run this command");
+			reply(channel, "win", "Only members of a team can run this command");
 			return false;
 		}
 		return true;

@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.requests.restaction.order.RoleOrderAction;
 import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.discord.emote.Emotable;
+import net.menoni.pil.bot.discord.listener.ChatCommandListener;
 import net.menoni.pil.bot.discord.listener.chatcmd.ChatCommand;
 import net.menoni.pil.bot.jdbc.model.JdbcMatch;
 import net.menoni.pil.bot.jdbc.model.JdbcMember;
@@ -40,6 +41,16 @@ public class TeamCommand implements ChatCommand {
 	@Override
 	public Collection<Permission> requiredPermissions() {
 		return List.of(Permission.MANAGE_CHANNEL);
+	}
+
+	@Override
+	public String shortHelpText() {
+		return "Manage teams, check `!team` for help with sub-commands";
+	}
+
+	@Override
+	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member) {
+		return ChatCommandListener.requireBotCmdChannel(applicationContext, channel);
 	}
 
 	@Override

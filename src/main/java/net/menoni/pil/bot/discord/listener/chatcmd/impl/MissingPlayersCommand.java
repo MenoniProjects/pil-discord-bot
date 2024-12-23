@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.menoni.pil.bot.discord.DiscordBot;
+import net.menoni.pil.bot.discord.listener.ChatCommandListener;
 import net.menoni.pil.bot.discord.listener.chatcmd.ChatCommand;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.jdbc.model.JdbcTeamSignup;
@@ -27,6 +28,16 @@ public class MissingPlayersCommand implements ChatCommand {
 	@Override
 	public Collection<Permission> requiredPermissions() {
 		return List.of(Permission.MANAGE_ROLES);
+	}
+
+	@Override
+	public String shortHelpText() {
+		return "Check if any team captains are not in the discord server";
+	}
+
+	@Override
+	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member) {
+		return ChatCommandListener.requireBotCmdChannel(applicationContext, channel);
 	}
 
 	@Override

@@ -40,7 +40,12 @@ public class MatchChannelCommand implements ChatCommand {
 	}
 
 	@Override
-	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) {
+	public String shortHelpText() {
+		return "Create a match channel for two teams in specified round & division";
+	}
+
+	@Override
+	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member) {
 		return ChatCommandListener.requireBotCmdChannel(applicationContext, channel);
 	}
 

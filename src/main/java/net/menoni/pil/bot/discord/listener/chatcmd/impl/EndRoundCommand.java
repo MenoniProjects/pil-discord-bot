@@ -33,7 +33,12 @@ public class EndRoundCommand implements ChatCommand {
 	}
 
 	@Override
-	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) {
+	public String shortHelpText() {
+		return "End a round, archiving channels, creating result CSV, and showing league-match-results template if applicable";
+	}
+
+	@Override
+	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member) {
 		return ChatCommandListener.requireBotCmdChannel(applicationContext, channel);
 	}
 

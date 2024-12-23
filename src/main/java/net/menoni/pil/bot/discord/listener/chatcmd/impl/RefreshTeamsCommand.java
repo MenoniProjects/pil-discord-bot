@@ -29,7 +29,12 @@ public class RefreshTeamsCommand implements ChatCommand {
 	}
 
 	@Override
-	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) {
+	public String shortHelpText() {
+		return "Refresh the teams message, or manually run a google sheet import";
+	}
+
+	@Override
+	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member) {
 		return ChatCommandListener.requireBotCmdChannel(applicationContext, channel);
 	}
 
