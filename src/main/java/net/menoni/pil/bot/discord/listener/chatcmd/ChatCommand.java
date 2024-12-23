@@ -21,7 +21,7 @@ public interface ChatCommand {
 
 	Collection<String> help();
 
-	boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member);
+	boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, boolean silent);
 
 	default void reply(GuildMessageChannelUnion channel, String alias, String message) {
 		try {

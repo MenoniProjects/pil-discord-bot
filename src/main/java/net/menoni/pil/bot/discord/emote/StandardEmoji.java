@@ -3,6 +3,7 @@ package net.menoni.pil.bot.discord.emote;
 public enum StandardEmoji implements Emotable<StandardEmoji>{
 
     WHITE_CHECK_MARK("\u2705"),
+    WARNING("\uE252"),
     ;
 
     private final String value;

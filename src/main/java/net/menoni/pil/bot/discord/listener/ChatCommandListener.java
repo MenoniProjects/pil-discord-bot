@@ -101,7 +101,7 @@ public class ChatCommandListener implements EventListener {
 				return true;
 			}
 		}
-		if (!command.canExecute(applicationContext, channel, member)) {
+		if (!command.canExecute(applicationContext, channel, member, false)) {
 			// canExecute is expected to give a no-access reason itself
 			return true;
 		}
@@ -115,7 +115,7 @@ public class ChatCommandListener implements EventListener {
 				return false;
 			}
 		}
-		if (!command.canExecute(applicationContext, channel, member)) {
+		if (!command.canExecute(applicationContext, channel, member, true)) {
 			return false;
 		}
 		return true;

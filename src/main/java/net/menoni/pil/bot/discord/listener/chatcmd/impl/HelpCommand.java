@@ -31,7 +31,7 @@ public class HelpCommand implements ChatCommand {
 	}
 
 	@Override
-	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member) {
+	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, boolean silent) {
 		// disallow in non-text channels
 		if (channel.getType() != ChannelType.TEXT) {
 			return false;

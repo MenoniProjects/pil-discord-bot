@@ -11,6 +11,7 @@ import net.menoni.pil.bot.discord.listener.chatcmd.ChatCommand;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.jdbc.model.JdbcTeamSignup;
 import net.menoni.pil.bot.service.TeamService;
+import net.menoni.pil.bot.util.DiscordFormattingUtil;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Collection;
@@ -36,7 +37,7 @@ public class MissingPlayersCommand implements ChatCommand {
 	}
 
 	@Override
-	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member) {
+	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, boolean silent) {
 		return ChatCommandListener.requireBotCmdChannel(applicationContext, channel);
 	}
 
@@ -101,7 +102,7 @@ public class MissingPlayersCommand implements ChatCommand {
 			JdbcTeam team = teams.get(s.getTeamId());
 			return "%s: %s".formatted(
 					team.getName(),
-					s.getDiscordName()
+					DiscordFormattingUtil.escapeFormatting(s.getDiscordName())
 			);
 		}).collect(Collectors.joining("\n- "));
 	}

@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.requests.restaction.order.RoleOrderAction;
 import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.discord.emote.Emotable;
+import net.menoni.pil.bot.discord.emote.StandardEmoji;
 import net.menoni.pil.bot.discord.listener.ChatCommandListener;
 import net.menoni.pil.bot.discord.listener.chatcmd.ChatCommand;
 import net.menoni.pil.bot.jdbc.model.JdbcMatch;
@@ -49,7 +50,7 @@ public class TeamCommand implements ChatCommand {
 	}
 
 	@Override
-	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member) {
+	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, boolean silent) {
 		return ChatCommandListener.requireBotCmdChannel(applicationContext, channel);
 	}
 
@@ -125,17 +126,19 @@ public class TeamCommand implements ChatCommand {
 				if (captainMember != null) {
 					captainNameDisplay = DiscordFormattingUtil.memberAsString(captainMember.getDiscordId());
 				} else if (captainSignup != null) {
-					captainNameDisplay = captainSignup.getDiscordName();
-					captainNotInServerDisplay = " **(NOT IN SERVER)**";
+					captainNameDisplay = "`%s`".formatted(DiscordFormattingUtil.escapeFormatting(captainSignup.getDiscordName()));
+					captainNotInServerDisplay = " **(%s NOT IN SERVER %s)**".formatted(
+							StandardEmoji.WARNING.print(), StandardEmoji.WARNING.print()
+					);
 				}
 				String emote = "";
 				if (sortedTeam.getEmoteName() != null && sortedTeam.getEmoteId() != null) {
 					emote = "%s ".formatted(Emotable.printById(sortedTeam.getEmoteName(), sortedTeam.getEmoteId(), false));
 				}
-				sb.append("- **Team:** ")
+				sb.append("- ")
 						.append(emote)
 						.append(DiscordFormattingUtil.roleAsString(sortedTeam.getDiscordRoleId()))
-						.append(" -> **Captain:** ")
+						.append(" → **Captain:** ")
 						.append(captainNameDisplay)
 						.append(captainNotInServerDisplay)
 						.append("\n");
