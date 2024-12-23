@@ -149,7 +149,7 @@ public class TeamCommand implements ChatCommand {
 				}
 			}
 		}
-		JDAUtil.queueAndWait(channel.sendMessage(sb.toString()));
+		JDAUtil.queueAndWait(channel.sendMessage(sb.toString()).setAllowedMentions(List.of()));
 		return true;
 	}
 
