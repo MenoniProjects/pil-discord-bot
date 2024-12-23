@@ -126,10 +126,8 @@ public class TeamCommand implements ChatCommand {
 				if (captainMember != null) {
 					captainNameDisplay = DiscordFormattingUtil.memberAsString(captainMember.getDiscordId());
 				} else if (captainSignup != null) {
-					captainNameDisplay = "`%s`".formatted(DiscordFormattingUtil.escapeFormatting(captainSignup.getDiscordName()));
-					captainNotInServerDisplay = " **(%s NOT IN SERVER %s)**".formatted(
-							StandardEmoji.WARNING.print(), StandardEmoji.WARNING.print()
-					);
+					captainNameDisplay = "`%s`".formatted(captainSignup.getDiscordName());
+					captainNotInServerDisplay = " **(NOT IN SERVER %s )**".formatted(StandardEmoji.WARNING.print());
 				}
 				String emote = "";
 				if (sortedTeam.getEmoteName() != null && sortedTeam.getEmoteId() != null) {
