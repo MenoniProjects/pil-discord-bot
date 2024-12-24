@@ -12,6 +12,7 @@ import org.springframework.context.ApplicationContext;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 public class HelpCommand implements ChatCommand {
@@ -49,6 +50,23 @@ public class HelpCommand implements ChatCommand {
 		List<ChatCommand> commands = chatCommandListener.getCommands();
 		List<ChatCommand> executableCommands = commands.stream().filter(c -> chatCommandListener.checkExecutionPermissionsAndChannel(c, channel, member)).toList();
 
+		if (args.length > 0) {
+			String name = args[0];
+			Optional<ChatCommand> allCmdOptional = commands.stream().filter(c -> c.names().contains(name.toLowerCase().trim())).findAny();
+			Optional<ChatCommand> cmdOptional = executableCommands.stream().filter(c -> c.names().contains(name.toLowerCase().trim())).findAny();
+			if (cmdOptional.isPresent()) {
+				ChatCommand cmd = cmdOptional.get();
+				cmd.sendHelp(channel, null);
+			} else {
+				if (allCmdOptional.isPresent()) {
+					reply(channel, alias, "Command `" + name + "` can not be used by you in this channel");
+				} else {
+					reply(channel, alias, "Command `" + name + "` does not exist");
+				}
+			}
+			return true;
+		}
+
 		if (executableCommands.isEmpty()) {
 			reply(channel, "help", "No usable commands for you in this channel");
 			return true;
@@ -66,6 +84,9 @@ public class HelpCommand implements ChatCommand {
 
 	@Override
 	public Collection<String> help() {
-		return List.of("!help -- List all usable commands and show short help info");
+		return List.of(
+				"!help -- List all usable commands and show short help info",
+				"!help [command] -- Show detailed help for another command"
+		);
 	}
 }

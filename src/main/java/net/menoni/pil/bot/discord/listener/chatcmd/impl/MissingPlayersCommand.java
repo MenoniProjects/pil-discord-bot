@@ -90,7 +90,10 @@ public class MissingPlayersCommand implements ChatCommand {
 
 	@Override
 	public Collection<String> help() {
-		return List.of("!missingplayers -- checks which signed up players are not in the server");
+		return List.of(
+				"!missingplayers -- checks which signed up captains are not in the server",
+				"!missingplayers all -- checks which signed up players are not in the server"
+		);
 	}
 
 	private List<JdbcTeamSignup> findMissingMembers(List<JdbcTeamSignup> signups, List<String> serverMemberNames) {
