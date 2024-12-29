@@ -60,6 +60,7 @@ public class TeamService {
 	public void deleteTeam(JdbcTeam team) {
 		this.teamSignupRepository.deleteSignupsForTeam(team.getId());
 		this.teamRepository.deleteTeam(bot, team);
+		this.updateMemberRolesAfterCsvImport();
 	}
 
 	public List<JdbcTeamSignup> getAllSignups() {
