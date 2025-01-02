@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.menoni.commons.util.TMUtils;
 import net.menoni.jda.commons.util.JDAUtil;
 import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.jdbc.model.JdbcMember;
@@ -21,6 +22,7 @@ import net.menoni.pil.bot.util.Scheduling;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
@@ -514,13 +516,21 @@ public class TeamService {
 		return str;
 	}
 
-	private static String factorTrackmaniaUuid(String link) throws Exception {
+	private static String factorTrackmaniaUuid(final String linkInput) throws Exception {
+		String link = linkInput;
 		if (link.length() == 36) {
 			try {
 				UUID.fromString(link);
 				return link;
 			} catch (IllegalArgumentException ex) {
 				throw new Exception("Invalid trackmania uuid format", ex);
+			}
+		}
+		if (TMUtils.isValidLogin(link)) {
+			try {
+				return TMUtils.decodeLoginToAccountId(link).toString();
+			} catch (IOException ex) {
+				throw new Exception("Invalid TM login " + link, ex);
 			}
 		}
 		if (!link.startsWith("https://trackmania.io/#/player/")) {
@@ -530,7 +540,17 @@ public class TeamService {
 		if (link.contains("/")) {
 			link = link.substring(0, link.indexOf("/"));
 		}
-		return link;
+		if (link.length() == 36) {
+			return link;
+		} else if (TMUtils.isValidLogin(link)) {
+			try {
+				return TMUtils.decodeLoginToAccountId(link).toString();
+			} catch (IOException ex) {
+				throw new Exception("Invalid TM login link " + link, ex);
+			}
+		} else {
+			throw new Exception("Invalid link input: " + linkInput);
+		}
 	}
 
 	public boolean ensurePlayerRoles(Member discordMember, JdbcMember botMember, Role playerRole, Role teamLeadRole) {
