@@ -396,9 +396,16 @@ public class TeamService {
 					}
 				}
 				if (newTeam) {
-					resultLines.add("Added team **%s** with members %s".formatted(
+					String image = teamForSignup.getImageUrl();
+					if (image == null || image.isBlank()) {
+						image = "_not provided_";
+					} else {
+						image = "<%s>".formatted(image);
+					}
+					resultLines.add("Added team **%s** with members %s\n\timage: %s".formatted(
 							teamForSignup.getName(),
-							csvSignupMembers.stream().map(CSVSignupMember::trackmaniaName).collect(Collectors.joining(", "))
+							csvSignupMembers.stream().map(CSVSignupMember::trackmaniaName).collect(Collectors.joining(", ")),
+							image
 					));
 				}
 
