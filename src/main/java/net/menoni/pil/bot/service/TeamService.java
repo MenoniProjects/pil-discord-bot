@@ -102,12 +102,12 @@ public class TeamService {
 		}
 
 		List<JdbcTeam> allTeams = new ArrayList<>(getAllTeams());
-		allTeams.sort(Comparator.comparing(JdbcTeam::getName));
+		allTeams.sort(Comparator.comparing(t -> t.getName().toLowerCase()));
 
 		List<JdbcTeam> noDivTeams = new ArrayList<>(allTeams.stream().filter(t -> t.getDivision() == null).toList());
 		List<JdbcTeam> divTeams = new ArrayList<>(allTeams.stream().filter(t -> t.getDivision() != null).toList());
 
-		divTeams.sort(Comparator.comparing(JdbcTeam::getDivision).thenComparing(JdbcTeam::getName));
+		divTeams.sort(Comparator.comparing(JdbcTeam::getDivision).thenComparing(t -> t.getName().toLowerCase()));
 
 		List<JdbcTeamSignup> allSignups = this.teamSignupRepository.getAllSignups();
 

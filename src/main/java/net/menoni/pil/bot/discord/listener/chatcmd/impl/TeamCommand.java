@@ -115,7 +115,7 @@ public class TeamCommand implements ChatCommand {
 
 		for (Map.Entry<Integer, List<JdbcTeam>> e : divTeams.entrySet()) {
 			Integer div = e.getKey();
-			TreeSet<JdbcTeam> sortedTeams = new TreeSet<>(Comparator.comparing(JdbcTeam::getName));
+			TreeSet<JdbcTeam> sortedTeams = new TreeSet<>(Comparator.comparing(t -> t.getName().toLowerCase()));
 			sortedTeams.addAll(e.getValue());
 
 			if (div != null && div > 0) {
@@ -371,7 +371,7 @@ public class TeamCommand implements ChatCommand {
 		Role aboveRole = bot.getRoleById(bot.getConfig().getTeamsDividerRoleId());
 
 		List<Role> teamRoles = new ArrayList<>(bot.getGuildRoles(teamDiscordRoleIds));
-		teamRoles.sort(Comparator.comparing(Role::getName));
+		teamRoles.sort(Comparator.comparing(r -> r.getName().toLowerCase()));
 		RoleOrderAction action = DiscordRoleUtil.createRoleOrderForRangeAction(g, aboveRole, teamRoles);
 
 		if (action == null) {
