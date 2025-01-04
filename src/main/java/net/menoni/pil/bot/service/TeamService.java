@@ -155,6 +155,8 @@ public class TeamService {
 
 		if (allTeams.isEmpty()) {
 			messages.add(List.of("_No signups yet_"));
+		} else {
+			messages.get(messages.size() - 1).add("-# %d teams total".formatted(allTeams.size()));
 		}
 
 		for (int i = 0; i < messages.size(); i++) {
