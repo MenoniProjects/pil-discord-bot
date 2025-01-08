@@ -20,6 +20,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 @Component
 public class ChatCommandListener implements EventListener {
@@ -77,7 +78,7 @@ public class ChatCommandListener implements EventListener {
 		String[] args = new String[0];
 		String alias = line;
 		if (line.contains(" ")) {
-			args = line.split(" ");
+			args = Stream.of(line.split(" ")).filter(p -> !p.isBlank()).toArray(String[]::new);;
 			alias = args[0];
 			args = Arrays.copyOfRange(args, 1, args.length);
 		}
