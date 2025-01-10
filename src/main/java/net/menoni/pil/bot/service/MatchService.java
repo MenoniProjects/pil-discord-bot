@@ -28,14 +28,14 @@ public class MatchService {
 	@Autowired
 	private CsvService csvService;
 
-	public void setMatchChannel(int division, int roundNumber, Long firstTeamId, Long secondTeamId, String matchChannelId) {
+	public void setMatchChannel(int division, int roundNumber, Long firstTeamId, Long secondTeamId, String matchChannelId, String pinMessageId) {
 		JdbcMatch match = matchRepository.find(division, roundNumber, firstTeamId, secondTeamId);
 		if (match != null) {
 			match.setMatchChannelId(matchChannelId);
 			match.setWinTeamId(null);
 			matchRepository.save(match);
 		} else {
-			match = new JdbcMatch(null, division, roundNumber, firstTeamId, secondTeamId, matchChannelId, null, null, null);
+			match = new JdbcMatch(null, division, roundNumber, firstTeamId, secondTeamId, matchChannelId, pinMessageId, null, null, null);
 			matchRepository.save(match);
 		}
 	}

@@ -17,6 +17,7 @@ public class JdbcMatch {
 	private Long firstTeamId;
 	private Long secondTeamId;
 	private String matchChannelId;
+	private String pinMessageId;
 	private Long winTeamId; // nullable
 	private Integer winTeamScore; // nullable
 	private Integer loseTeamScore; // nullable

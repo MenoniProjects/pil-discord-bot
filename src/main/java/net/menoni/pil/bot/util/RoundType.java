@@ -7,7 +7,8 @@ import java.util.regex.Pattern;
 @Getter
 public enum RoundType {
 
-	SPECIAL(-1, "Special", (division, roundNum, teamName1, teamName2) -> "special-%s-%s".formatted(teamName1, teamName2)),
+	TEST(-99, "Test", (division, roundNum, teamName1, teamName2) -> "test-%s-%s".formatted(teamName1, teamName2), false),
+	SPECIAL(-1, "Special", (division, roundNum, teamName1, teamName2) -> "special-%s-%s".formatted(teamName1, teamName2), false),
 	LEAGUE(0, "League", (division, roundNum, teamName1, teamName2) -> "d%dr%d-league-%s-%s".formatted(division, roundNum, teamName1, teamName2)),
 	PLAYOFFS(10, "Play-offs", (division, roundNum, teamName1, teamName2) -> "d%dr%d-playoff-%s-%s".formatted(division, roundNum, teamName1, teamName2)),
 	GRAND_FINAL(20, "Grand Final", (division, roundNum, teamName1, teamName2) -> "d%d-grandfinal-%s-%s".formatted(division, teamName1, teamName2)),
@@ -16,11 +17,17 @@ public enum RoundType {
 	private final int start;
 	private final String displayName;
 	private final MatchChannelNameFormatter formatter;
+	private final boolean requireDivision;
 
 	RoundType(int start, String displayName, MatchChannelNameFormatter formatter) {
+		this(start, displayName, formatter, true);
+	}
+
+	RoundType(int start, String displayName, MatchChannelNameFormatter formatter, boolean requireDivision) {
 		this.start = start;
 		this.displayName = displayName;
 		this.formatter = formatter;
+		this.requireDivision = requireDivision;
 	}
 
 	public static RoundType forRoundNumber(int roundNumber) {

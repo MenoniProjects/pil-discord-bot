@@ -106,7 +106,7 @@ public class MatchChannelCommand implements ChatCommand {
 		try {
 			roundNum = Integer.parseInt(roundNumArg);
 		} catch (NumberFormatException ex) {
-			sendHelp(channel, "Third argument needs to be a round number (1 and up)");
+			sendHelp(channel, "Third argument needs to be a round number");
 			return true;
 		}
 
@@ -116,11 +116,6 @@ public class MatchChannelCommand implements ChatCommand {
 		}
 		if (!DiscordArgUtil.isRole(role2Arg)) {
 			sendHelp(channel, "Fifth argument needs to be a team @ role");
-			return true;
-		}
-
-		if (roundNum < 0) {
-			sendHelp(channel, "Round number needs to be positive");
 			return true;
 		}
 
@@ -160,7 +155,7 @@ public class MatchChannelCommand implements ChatCommand {
 			return true;
 		}
 
-		if (roundType != RoundType.SPECIAL) {
+		if (roundType.isRequireDivision()) {
 			if (team1.getDivision() != divNum) {
 				sendHelp(channel, "Requested first team %s is wrong division (%d), expected %d".formatted(
 						DiscordFormattingUtil.roleAsString(teamRole1.getId()),
@@ -181,6 +176,7 @@ public class MatchChannelCommand implements ChatCommand {
 
 		int roundNumFinal = roundNum;
 		int divNumFinal = divNum;
+		RoundType roundTypeFinal = roundType;
 
 		CompletableFuture<MatchChannelService.MatchChannelCreateResult> future = matchChannelService.createMatchChannel(divNum, roundNum, teamRole1, teamRole2, pinMessageContent);
 		future.whenComplete((result, error) -> {
@@ -197,7 +193,8 @@ public class MatchChannelCommand implements ChatCommand {
 			} else {
 				extra = "\n" + extra;
 			}
-			reply(channel, "matchchannel", "Created <#%s> for <@&%s> vs <@&%s> (round: d%d-r%d)%s".formatted(
+			reply(channel, "matchchannel", "Created %s <#%s> for <@&%s> vs <@&%s> (round: d%d-r%d)%s".formatted(
+					roundTypeFinal.name(),
 					result.channel().getId(),
 					teamRole1.getId(),
 					teamRole2.getId(),

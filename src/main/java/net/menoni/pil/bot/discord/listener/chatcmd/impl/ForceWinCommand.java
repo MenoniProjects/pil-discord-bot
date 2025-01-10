@@ -9,6 +9,7 @@ import net.menoni.pil.bot.discord.listener.chatcmd.ChatCommand;
 import net.menoni.pil.bot.jdbc.model.JdbcMatch;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.service.BotLogsService;
+import net.menoni.pil.bot.service.MatchChannelService;
 import net.menoni.pil.bot.service.MatchService;
 import net.menoni.pil.bot.service.TeamService;
 import net.menoni.pil.bot.util.DiscordArgUtil;
@@ -115,7 +116,7 @@ public class ForceWinCommand implements ChatCommand {
 				reply(channel, alias, "No match found for requested division, round and teams - use `confirm` argument to force create it and report match results");
 				return true;
 			}
-			match = new JdbcMatch(null, divNumber, roundNumber, winTeam.getId(), loseTeam.getId(), "", winTeam.getId(), parsedMatchScore.winTeamScore(), parsedMatchScore.loseTeamScore());
+			match = new JdbcMatch(null, divNumber, roundNumber, winTeam.getId(), loseTeam.getId(), "", null, winTeam.getId(), parsedMatchScore.winTeamScore(), parsedMatchScore.loseTeamScore());
 		} else {
 			match.setWinTeamId(winTeam.getId());
 			match.setWinTeamScore(parsedMatchScore.winTeamScore());
@@ -123,8 +124,8 @@ public class ForceWinCommand implements ChatCommand {
 		}
 		matchService.updateMatch(match);
 
-		BotLogsService logsService = applicationContext.getBean(BotLogsService.class);
-		logsService.reportMatchForceWin(member, divNumber, roundNumber, winTeam, loseTeam, parsedMatchScore);
+		applicationContext.getBean(BotLogsService.class).reportMatchForceWin(member, divNumber, roundNumber, winTeam, loseTeam, parsedMatchScore);
+		applicationContext.getBean(MatchChannelService.class).onMatchMarkWin(member, match, parsedMatchScore);
 
 		reply(channel, alias, "Marked match (div: %d, round: %d, vs: %s) as won by %s with result: %s".formatted(
 				divNumber,

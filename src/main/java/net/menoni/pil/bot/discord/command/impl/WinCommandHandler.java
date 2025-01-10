@@ -8,12 +8,12 @@ import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInterac
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
-import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.discord.command.CommandHandler;
 import net.menoni.pil.bot.jdbc.model.JdbcMatch;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.jdbc.model.JdbcTeamSignup;
 import net.menoni.pil.bot.service.BotLogsService;
+import net.menoni.pil.bot.service.MatchChannelService;
 import net.menoni.pil.bot.service.MatchService;
 import net.menoni.pil.bot.service.TeamService;
 import net.menoni.pil.bot.util.DiscordArgUtil;
@@ -29,6 +29,7 @@ public class WinCommandHandler extends CommandHandler {
 	@Autowired private TeamService teamService;
 	@Autowired private MatchService matchService;
 	@Autowired private BotLogsService botLogsService;
+	@Autowired private MatchChannelService matchChannelService;
 
 	public WinCommandHandler() {
 		super("win");
@@ -84,6 +85,7 @@ public class WinCommandHandler extends CommandHandler {
 		));
 
 		botLogsService.reportMatchWin(member, match.getDivision(), match.getRoundNumber(), winTeam, loseTeam, parsedMatchScore);
+		matchChannelService.onMatchMarkWin(member, match, parsedMatchScore);
 	}
 
 	@Override

@@ -12,6 +12,7 @@ import net.menoni.pil.bot.jdbc.model.JdbcMatch;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.jdbc.model.JdbcTeamSignup;
 import net.menoni.pil.bot.service.BotLogsService;
+import net.menoni.pil.bot.service.MatchChannelService;
 import net.menoni.pil.bot.service.MatchService;
 import net.menoni.pil.bot.service.TeamService;
 import net.menoni.pil.bot.util.DiscordArgUtil;
@@ -103,8 +104,8 @@ public class WinCommand implements ChatCommand {
 				parsedMatchScore.print()
 		));
 
-		BotLogsService logsService = applicationContext.getBean(BotLogsService.class);
-		logsService.reportMatchWin(member, match.getDivision(), match.getRoundNumber(), winTeam, loseTeam, parsedMatchScore);
+		applicationContext.getBean(BotLogsService.class).reportMatchWin(member, match.getDivision(), match.getRoundNumber(), winTeam, loseTeam, parsedMatchScore);
+		applicationContext.getBean(MatchChannelService.class).onMatchMarkWin(member, match, parsedMatchScore);
 		return true;
 	}
 
