@@ -13,19 +13,23 @@ import net.dv8tion.jda.api.utils.AttachedFile;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.menoni.pil.bot.discord.command.CommandHandler;
 import net.menoni.pil.bot.match.*;
-import net.menoni.pil.bot.match.*;
 import net.menoni.pil.bot.service.TeamService;
+import net.menoni.spring.commons.service.CsvService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
+import java.util.List;
 
 @Slf4j
 public class ParseMatchDumpCommandHandler extends CommandHandler {
 
 	@Autowired
 	private TeamService teamService;
+	@Autowired
+	private CsvService csvService;
 
 	public ParseMatchDumpCommandHandler() {
 		super("parsematchdump");
@@ -53,11 +57,17 @@ public class ParseMatchDumpCommandHandler extends CommandHandler {
 					return;
 				}
 				try {
-					Match match = MatchDumpParser.parse(teamService, inputStream);
+					List<String[]> lines = csvService.read(new InputStreamReader(inputStream));
+					if (lines.isEmpty()) {
+						hook.editOriginal("Failed to read empty CSV").queue();
+						return;
+					}
+					lines.remove(0);
+					Match match = MatchDumpParser.parse(teamService, lines);
 
 					MessageEmbed messageEmbed = MatchEmbed.top10(match);
 					String matchTable = MatchTable.playersRanked(match, EnumSet.allOf(MatchTableColumn.class));
-					byte[] matchCsv = MatchTable.playersRankedCsv(match, EnumSet.allOf(MatchTableColumn.class));
+					byte[] matchCsv = MatchTable.playersRankedCsv(csvService, match, EnumSet.allOf(MatchTableColumn.class));
 
 					MessageEditBuilder editBuilder = new MessageEditBuilder();
 					editBuilder.setEmbeds(messageEmbed);

@@ -1,25 +1,16 @@
 package net.menoni.pil.bot.match;
 
-import com.opencsv.CSVReader;
-import com.opencsv.exceptions.CsvException;
 import lombok.extern.slf4j.Slf4j;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.service.TeamService;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.*;
 
 @Slf4j
 public class MatchDumpParser {
 
-	public static Match parse(TeamService teamService, InputStream stream) throws IOException, CsvException {
-		CSVReader reader = new CSVReader(new InputStreamReader(stream));
-
-		reader.skip(1); // header
-		List<String[]> lines = reader.readAll();
-
+	public static Match parse(TeamService teamService, List<String[]> lines) throws IOException {
 		Set<MatchRoundPlayerFinish> parsedFinishes = new TreeSet<>();
 		Map<String, MatchPlayer> playerMap = new HashMap<>();
 		for (String[] line : lines) {

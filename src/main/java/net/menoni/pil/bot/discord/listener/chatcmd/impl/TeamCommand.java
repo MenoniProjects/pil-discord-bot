@@ -1,6 +1,5 @@
 package net.menoni.pil.bot.discord.listener.chatcmd.impl;
 
-import com.opencsv.CSVWriter;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
@@ -11,6 +10,7 @@ import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.requests.restaction.order.RoleOrderAction;
 import net.dv8tion.jda.api.utils.FileUpload;
+import net.menoni.jda.commons.util.JDAUtil;
 import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.discord.emote.Emotable;
 import net.menoni.pil.bot.discord.emote.StandardEmoji;
@@ -26,19 +26,18 @@ import net.menoni.pil.bot.service.MemberService;
 import net.menoni.pil.bot.service.TeamService;
 import net.menoni.pil.bot.util.DiscordArgUtil;
 import net.menoni.pil.bot.util.DiscordFormattingUtil;
-import net.menoni.jda.commons.util.JDAUtil;
 import net.menoni.pil.bot.util.DiscordRoleUtil;
 import net.menoni.pil.bot.util.Obj;
+import net.menoni.spring.commons.service.CsvService;
 import org.springframework.context.ApplicationContext;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
 public class TeamCommand implements ChatCommand {
+
 	@Override
 	public Collection<String> names() {
 		return List.of("team");
@@ -395,24 +394,20 @@ public class TeamCommand implements ChatCommand {
 		TeamService teamService = applicationContext.getBean(TeamService.class);
 		List<JdbcTeam> teams = teamService.getAllTeams();
 
-		ByteArrayOutputStream fileBytes = new ByteArrayOutputStream();
-		OutputStreamWriter writer = new OutputStreamWriter(fileBytes);
-		try (CSVWriter w = new CSVWriter(writer)) {
-			w.writeNext(new String[] {"seed", "division", "team-id", "team-name"});
-			teams.forEach(team -> {
-				String[] line = new String[4];
-				line[0] = "-1";
-				line[1] = Obj.or(team.getDivision(), -1).toString();
-				line[2] = team.getDiscordRoleId();
-				line[3] = team.getName();
-				w.writeNext(line);
-			});
-
-			writer.flush();
+		CsvService csvService = applicationContext.getBean(CsvService.class);
+		try {
+			String[] header = new String[]{"seed", "division", "team-id", "team-name"};
+			List<Object[]> lines = new ArrayList<>();
+			teams.forEach(team -> lines.add(new Object[]{
+					"-1",
+					Obj.or(team.getDivision(), -1).toString(),
+					team.getDiscordRoleId(),
+					team.getName()
+			}));
 
 			channel
 					.sendMessage("Created magical xeru teams CSV")
-					.addFiles(FileUpload.fromData(fileBytes.toByteArray(), "pil_teams_xeruformat_%d.csv".formatted(System.currentTimeMillis())))
+					.addFiles(FileUpload.fromData(csvService.create(header, lines), "pil_teams_xeruformat_%d.csv".formatted(System.currentTimeMillis())))
 					.queue();
 		} catch (IOException e) {
 			log.error("Failed to write trackmania.events CSV", e);

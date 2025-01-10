@@ -1,6 +1,6 @@
 package net.menoni.pil.bot.match;
 
-import com.opencsv.CSVWriter;
+import net.menoni.spring.commons.service.CsvService;
 import net.menoni.spring.commons.util.DiscordTableBuilder;
 
 import java.io.ByteArrayOutputStream;
@@ -26,26 +26,18 @@ public class MatchTable {
 		return t.build();
 	}
 
-	public static byte[] playersRankedCsv(Match match, EnumSet<MatchTableColumn> columns) throws IOException {
-		ByteArrayOutputStream fileBytes = new ByteArrayOutputStream();
-		OutputStreamWriter writer = new OutputStreamWriter(fileBytes);
-		CSVWriter w = new CSVWriter(writer);
-		w.writeNext(columns.stream().map(MatchTableColumn::getHeader).toArray(String[]::new));
-
+	public static byte[] playersRankedCsv(CsvService csvService, Match match, EnumSet<MatchTableColumn> columns) throws IOException {
+		String[] headers = columns.stream().map(MatchTableColumn::getHeader).toArray(String[]::new);
+		List<Object[]> lines = new ArrayList<>();
 		for (MatchPlayer player : match.getPlayers()) {
 			List<String> row = new ArrayList<>();
 			for (MatchTableColumn column : columns) {
 				row.add(getRowValue(column, match, player).toString());
 			}
 
-			w.writeNext(row.toArray(String[]::new));
+			lines.add(row.toArray());
 		}
-
-		writer.flush();
-		byte[] data = fileBytes.toByteArray();
-		writer.close();
-
-		return data;
+		return csvService.create(headers, lines);
 	}
 
 	private static Object getRowValue(

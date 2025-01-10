@@ -1,12 +1,12 @@
 package net.menoni.pil.bot.service;
 
-import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.jda.commons.util.JDAUtil;
+import net.menoni.spring.commons.service.CsvService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -30,11 +30,9 @@ public class SignupSheetService {
 			.messageConverters(new StringHttpMessageConverter(StandardCharsets.UTF_8))
 			.build();
 
-	@Autowired
-	private DiscordBot bot;
-
-	@Autowired
-	private TeamService teamService;
+	@Autowired private DiscordBot bot;
+	@Autowired private TeamService teamService;
+	@Autowired private CsvService csvService;
 
 	// key part of edit url
 	@Value("${pil.signups.sheet.key:}")
@@ -119,10 +117,8 @@ public class SignupSheetService {
 		}
 
 		String body = csvEntity.getBody();
-		CSVReader reader = new CSVReader(new StringReader(body));
-		List<String[]> result = reader.readAll();
-		reader.close();
-		if (result != null && result.size() > 0) {
+		List<String[]> result = csvService.read(new StringReader(body));
+		if (result != null && !result.isEmpty()) {
 			result.remove(0);
 		}
 		return result;

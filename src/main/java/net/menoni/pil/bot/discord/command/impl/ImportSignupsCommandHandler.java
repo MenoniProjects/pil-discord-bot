@@ -1,6 +1,5 @@
 package net.menoni.pil.bot.discord.command.impl;
 
-import com.opencsv.CSVReader;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
@@ -9,6 +8,7 @@ import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.menoni.pil.bot.discord.command.CommandHandler;
 import net.menoni.pil.bot.service.TeamService;
+import net.menoni.spring.commons.service.CsvService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.InputStream;
@@ -20,6 +20,7 @@ import java.util.List;
 public class ImportSignupsCommandHandler extends CommandHandler {
 
     @Autowired private TeamService teamService;
+    @Autowired private CsvService csvService;
 
     public ImportSignupsCommandHandler() {
         super("importsignups");
@@ -52,10 +53,13 @@ public class ImportSignupsCommandHandler extends CommandHandler {
     }
 
     private void importSignupsCsv(InteractionHook hook, InputStream stream) {
-        CSVReader reader = new CSVReader(new InputStreamReader(stream));
 	    try {
-            reader.skip(1);
-            List<String[]> lines = reader.readAll();
+            List<String[]> lines = csvService.read(new InputStreamReader(stream));
+            if (lines.isEmpty()) {
+                hook.editOriginal("Could not parse Empty CSV").queue();
+                return;
+            }
+            lines.remove(0);
 
             List<String> resultLines = teamService.importCsv(lines);
             if (resultLines.isEmpty()) {
