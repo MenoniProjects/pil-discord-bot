@@ -123,6 +123,7 @@ public class TeamCommand implements ChatCommand {
 				sb.append("## Division Not Assigned\n");
 			}
 			for (JdbcTeam sortedTeam : sortedTeams) {
+				StringBuilder line = new StringBuilder();
 				JdbcTeamSignup captainSignup = teamIdMappedCaptains.get(sortedTeam.getId());
 				JdbcMember captainMember = null;
 				if (captainSignup != null) {
@@ -140,7 +141,7 @@ public class TeamCommand implements ChatCommand {
 				if (sortedTeam.getEmoteName() != null && sortedTeam.getEmoteId() != null) {
 					emote = "%s ".formatted(Emotable.printById(sortedTeam.getEmoteName(), sortedTeam.getEmoteId(), false));
 				}
-				sb.append("- ")
+				line.append("- ")
 						.append(emote)
 						.append(DiscordFormattingUtil.roleAsString(sortedTeam.getDiscordRoleId()))
 						.append(" → **Captain:** ")
@@ -150,10 +151,17 @@ public class TeamCommand implements ChatCommand {
 
 				if (sortedTeam.getEmoteId() == null || sortedTeam.getEmoteName() == null) {
 					if (sortedTeam.getImageUrl() != null && !sortedTeam.getImageUrl().isBlank()) {
-						sb.append("_emote not set - signup image:_ <").append(sortedTeam.getImageUrl()).append(">\n");
+						line.append("_emote not set - signup image:_ <").append(sortedTeam.getImageUrl()).append(">\n");
 					} else {
-						sb.append("_emote not set - no image provided_\n");
+						line.append("_emote not set - no image provided_\n");
 					}
+				}
+
+				if (sb.length() + line.length() < 2000) {
+					sb.append(line);
+				} else {
+					JDAUtil.queueAndWait(channel.sendMessage(sb.toString()).setAllowedMentions(List.of()));
+					sb = new StringBuilder(line.toString());
 				}
 			}
 		}
