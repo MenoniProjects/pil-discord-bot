@@ -3,22 +3,22 @@ package net.menoni.pil.bot.match;
 import net.menoni.spring.commons.service.CsvService;
 import net.menoni.spring.commons.util.DiscordTableBuilder;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 
 public class MatchTable {
 
-	public static String playersRanked(Match match, EnumSet<MatchTableColumn> columns) {
+	public static String teamsRanked(Match match, EnumSet<MatchTableColumn> columns) {
 		DiscordTableBuilder t = new DiscordTableBuilder(columns.stream().map(MatchTableColumn::getHeader).toList());
 
-		for (MatchPlayer player : match.getPlayers()) {
+		for (Map.Entry<String, Integer> e : match.getTeamScoresRanked().entrySet()) {
+			String teamName = e.getKey();
 			List<Object> row = new ArrayList<>();
 			for (MatchTableColumn column : columns) {
-				row.add(getRowValue(column, match, player));
+				row.add(getRowValue(column, match, teamName));
 			}
 			t.addRow(row);
 		}
@@ -26,15 +26,15 @@ public class MatchTable {
 		return t.build();
 	}
 
-	public static byte[] playersRankedCsv(CsvService csvService, Match match, EnumSet<MatchTableColumn> columns) throws IOException {
+	public static byte[] teamsRankedCsv(CsvService csvService, Match match, EnumSet<MatchTableColumn> columns) throws IOException {
 		String[] headers = columns.stream().map(MatchTableColumn::getHeader).toArray(String[]::new);
 		List<Object[]> lines = new ArrayList<>();
-		for (MatchPlayer player : match.getPlayers()) {
+		for (Map.Entry<String, Integer> e : match.getTeamScoresRanked().entrySet()) {
+			String teamName = e.getKey();
 			List<String> row = new ArrayList<>();
 			for (MatchTableColumn column : columns) {
-				row.add(getRowValue(column, match, player).toString());
+				row.add(getRowValue(column, match, teamName).toString());
 			}
-
 			lines.add(row.toArray());
 		}
 		return csvService.create(headers, lines);
@@ -43,8 +43,8 @@ public class MatchTable {
 	private static Object getRowValue(
 			MatchTableColumn column,
 			Match match,
-			MatchPlayer player
+			String team
 	) {
-		return column.getExtractor().apply(match, player);
+		return column.getExtractor().apply(match, team);
 	}
 }

@@ -25,6 +25,10 @@ public class MatchRoundPlayerFinish implements Comparable<MatchRoundPlayerFinish
 		if (i != 0) {
 			return i;
 		}
-		return Integer.compare(o.score, this.score);
+		i = Integer.compare(o.score, this.score);
+		if (i != 0) {
+			return i;
+		}
+		return o.playerId.compareTo(this.playerId);
 	}
 }

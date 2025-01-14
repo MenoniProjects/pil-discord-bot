@@ -65,22 +65,34 @@ public class ParseMatchDumpCommandHandler extends CommandHandler {
 					lines.remove(0);
 					Match match = MatchDumpParser.parse(teamService, lines);
 
-					MessageEmbed messageEmbed = MatchEmbed.top10(match);
-					String matchTable = MatchTable.playersRanked(match, EnumSet.allOf(MatchTableColumn.class));
-					byte[] matchCsv = MatchTable.playersRankedCsv(csvService, match, EnumSet.allOf(MatchTableColumn.class));
-
+//					MessageEmbed messageEmbed = MatchEmbed.top10(match);
+					String matchTable = MatchTable.teamsRanked(match, EnumSet.allOf(MatchTableColumn.class));
+					byte[] matchCsv = MatchTable.teamsRankedCsv(csvService, match, EnumSet.allOf(MatchTableColumn.class));
 					MessageEditBuilder editBuilder = new MessageEditBuilder();
-					editBuilder.setEmbeds(messageEmbed);
+//					editBuilder.setEmbeds(messageEmbed);
 					editBuilder.setAttachments(
 							AttachedFile.fromData(matchTable.getBytes(StandardCharsets.UTF_8), "match-table.txt"),
 							AttachedFile.fromData(matchCsv, "match-table.csv")
 					);
-					editBuilder.setContent("");
+					if (match.getProblems().isEmpty()) {
+						editBuilder.setContent("");
+					} else {
+						StringBuilder sb = new StringBuilder("Found " + match.getProblems().size() + " problems:\n");
+						for (int i = 0; i < match.getProblems().size(); i++) {
+							String problem = match.getProblems().get(i);
+							if (problem.length() + sb.length() > 1800) {
+								sb.append("-# and %d more".formatted(match.getProblems().size() - i));
+								break;
+							}
+							sb.append("- ").append(problem).append("\n");
+						}
+						editBuilder.setContent(sb.toString());
+					}
 
 					hook.editOriginal(editBuilder.build()).queue();
 				} catch (IOException | CsvException e) {
-					hook.editOriginal("Error parsing csv: " + e.getMessage()).queue();
 					log.error("Error parsing csv", e);
+					hook.editOriginal("Error parsing csv: " + e.getMessage()).queue();
 				}
 			}));
 		});

@@ -11,21 +11,12 @@ import java.util.function.BiFunction;
 @AllArgsConstructor
 public enum MatchTableColumn {
 
-	RANK("Rank", (m, mp) -> new ArrayList<>(m.getPlayers()).indexOf(mp) + 1),
-	TEAM("Team", (m, mp) -> mp.getTeamName()),
-	PLAYER_NAME("Name", (m, mp) -> mp.getPlayerName()),
-	PLAYER_ID("ID", (m, mp) -> mp.getPlayerId()),
-	POINTS("Points", (m, mp) -> mp.getPoints()),
-	AVERAGE_TIME("Average Time", (m, mp) -> TrackmaniaUtil.formatRecordTime(m.getPlayerAverageTime(mp.getPlayerId()))),
-	BEST_TIME("Best Time", (m, mp) -> TrackmaniaUtil.formatRecordTime(m.getPlayerBestTime(mp.getPlayerId()))),
-	MISSED_ROUNDS("Missed Rounds", (m, mp) -> {
-		int missedRounds = m.getRounds().size() - m.getPlayerRounds(mp.getPlayerId()).size();
-		return missedRounds > 0 ? Integer.toString(missedRounds) : "-";
-	})
-
+	RANK("Rank", (m, team) -> new ArrayList<>(m.getTeamScoresRanked().keySet()).indexOf(team) + 1),
+	TEAM("Team", (m, team) -> team),
+	POINTS("Points", (m, team) -> m.getTeamScoresRanked().get(team)),
 	;
 
 	private final String header;
-	private final BiFunction<Match, MatchPlayer, Object> extractor;
+	private final BiFunction<Match, String, Object> extractor;
 
 }

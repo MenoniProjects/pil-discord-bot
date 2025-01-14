@@ -45,7 +45,7 @@ public class SignupSheetService {
 		}
 	}
 
-	@Scheduled(cron = "0 0 * * * *")
+//	@Scheduled(cron = "0 0 * * * *")
 	public void signupSheetImportScheduling() {
 		log.info("Starting hourly signup-sheet-import");
 		try {
