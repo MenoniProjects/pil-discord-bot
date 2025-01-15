@@ -23,22 +23,23 @@ public class MatchDumpParser {
 
 		// figure out point repartition from round 1, and repair/fill based on next rounds of first map
 		List<Integer> pointRepartition = new ArrayList<>();
-		boolean roundZeroPassed = false;
+		Integer firstRoundNum = parsedFinishes.stream().findFirst().map(MatchRoundPlayerFinish::getRoundNumber).orElse(null);
+		boolean firstRoundPassed = false;
 		int checkIndex = 0;
 		int checkRound = 0;
 		for (MatchRoundPlayerFinish parsedFinish : parsedFinishes) {
 			// use first map as point repartition capture
-			if (roundZeroPassed) {
-				if (parsedFinish.getRoundNumber() == 0) {
+			if (firstRoundPassed) {
+				if (parsedFinish.getRoundNumber() < checkRound) {
 					break;
 				}
 			}
 
-			if (parsedFinish.getRoundNumber() == 0) {
+			if (Objects.equals(parsedFinish.getRoundNumber(), firstRoundNum)) {
 				pointRepartition.add(parsedFinish.getScore());
 			}
-			if (parsedFinish.getRoundNumber() > 0) {
-				roundZeroPassed = true;
+			if (parsedFinish.getRoundNumber() > firstRoundNum) {
+				firstRoundPassed = true;
 
 				if (parsedFinish.getRoundNumber() != checkRound) {
 					checkRound = parsedFinish.getRoundNumber();
@@ -80,6 +81,7 @@ public class MatchDumpParser {
 			lineNumber++;
 		}
 
+
 		// continue parse
 		Set<Integer> roundNumbers = new TreeSet<>();
 		for (MatchRoundPlayerFinish round : parsedFinishes) {
@@ -92,18 +94,22 @@ public class MatchDumpParser {
 		int currentRound = -1;
 		for (MatchRoundPlayerFinish parsedFinish : parsedFinishes) {
 			if (parsedFinish.getRoundNumber() != currentRound) {
-				currentRound = parsedFinish.getRoundNumber();
-				if (currentRound == 0) {
+				if (currentRound == -1) {
+					mapServerId++;
+				} else if (parsedFinish.getRoundNumber() < currentRound) {
 					mapServerId++;
 				}
+				currentRound = parsedFinish.getRoundNumber();
 				if (!finishesForCurrentRound.isEmpty()) {
 					rounds.add(new MatchRound(mapServerId, finishesForCurrentRound.stream().findFirst().get().getRoundNumber(), finishesForCurrentRound));
+					finishesForCurrentRound = new TreeSet<>();
 				}
 			}
 
 			finishesForCurrentRound.add(parsedFinish);
 		}
 		if (!finishesForCurrentRound.isEmpty()) {
+			mapServerId++;
 			rounds.add(new MatchRound(mapServerId, finishesForCurrentRound.stream().findFirst().get().getRoundNumber(), finishesForCurrentRound));
 		}
 
