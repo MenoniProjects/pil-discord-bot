@@ -10,6 +10,8 @@ import net.menoni.pil.bot.util.DiscordFormattingUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Slf4j
 @Service
 public class BotLogsService {
@@ -21,7 +23,7 @@ public class BotLogsService {
 		TextChannel channel = bot.getBotLogsChannel();
 		if (channel != null) {
 			log.info(DiscordFormattingUtil.formatMessageForContext(false, message, args));
-			channel.sendMessage(DiscordFormattingUtil.formatMessageForContext(true, message, args)).queue();
+			channel.sendMessage(DiscordFormattingUtil.formatMessageForContext(true, message, args)).setAllowedMentions(List.of()).queue();
 		} else {
 			log.error("[missing logs channel] {}", DiscordFormattingUtil.formatMessageForContext(false, message, args));
 		}
