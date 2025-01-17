@@ -275,9 +275,17 @@ public class MatchChannelService extends ListenerAdapter {
 	}
 
 	private JdbcTeamSignup validateMember(StringSelectInteractionEvent event) {
+		if (event.getMember() == null) {
+			event.reply("Some internal error happened retrieving your user information").setEphemeral(false).queue();
+			return null;
+		}
 		JdbcTeamSignup teamMemberSignup = teamService.getSignupForMember(event.getMember());
 		if (teamMemberSignup == null) {
 			event.reply("Could not find your team membership").setEphemeral(false).queue();
+			return null;
+		}
+		if (event.getMember().getRoles().stream().noneMatch(r -> Objects.equals(r.getId(), bot.getTeamLeadRole().getId()))) {
+			event.reply("You need to be team captain to submit a score - if no team captain is available ask an admin for help").setEphemeral(true).queue();
 			return null;
 		}
 		return teamMemberSignup;
@@ -333,7 +341,7 @@ public class MatchChannelService extends ListenerAdapter {
 		if (source != null && !source.isBlank()) {
 			r = source + "\n-# -----\n";
 		}
-		return r + "Use the `/win` command, or the options below to submit your match result.\nThe result should only be submitted by a player from the **winning** team.";
+		return r + "Use the `/win` command, or the options below to submit your match result.\nThe result should only be submitted by a captain from the **winning** team.\nIf no captain is available, ask an admin for help.";
 	}
 
 	private ChannelAction<TextChannel> applyRoleViewAccess(ChannelAction<TextChannel> action, Role role) {

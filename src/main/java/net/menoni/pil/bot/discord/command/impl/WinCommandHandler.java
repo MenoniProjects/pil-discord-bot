@@ -60,6 +60,11 @@ public class WinCommandHandler extends CommandHandler {
 			return;
 		}
 
+		if (member.getRoles().stream().noneMatch(r -> Objects.equals(r.getId(), getBot().getTeamLeadRole().getId()))) {
+			replyPrivate(event, "You need to be team captain to use this command. If no captain is available ask an admin for help.");
+			return;
+		}
+
 		if (score == null) {
 			replyPrivate(event, "Invalid score result");
 			return;

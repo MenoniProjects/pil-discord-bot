@@ -53,9 +53,9 @@ public class WinCommand implements ChatCommand {
 			}
 			return false;
 		}
-		if (member.getRoles().stream().map(Role::getId).noneMatch(id -> Objects.equals(id, bot.getConfig().getPlayerRoleId()))) {
+		if (member.getRoles().stream().map(Role::getId).noneMatch(id -> Objects.equals(id, bot.getConfig().getTeamLeadRoleId()))) {
 			if (!silent) {
-				reply(channel, "win", "Only members of a team can run this command");
+				reply(channel, "win", "Only captains of a team can run this command");
 			}
 			return false;
 		}

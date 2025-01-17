@@ -24,9 +24,6 @@ import java.util.Objects;
 @Slf4j
 public class EventsExportCommand implements ChatCommand {
 
-	@Autowired
-	private CsvService csvService;
-
 	@Override
 	public Collection<String> names() {
 		return List.of("eventsexport");
@@ -74,6 +71,8 @@ public class EventsExportCommand implements ChatCommand {
 					});
 				}
 			});
+
+			CsvService csvService = applicationContext.getBean(CsvService.class);
 
 			channel
 					.sendMessage("Created trackmania.events teams CSV")
