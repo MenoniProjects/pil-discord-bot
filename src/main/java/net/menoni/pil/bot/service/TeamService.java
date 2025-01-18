@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.menoni.commons.util.TMUtils;
 import net.menoni.jda.commons.util.JDAUtil;
+import net.menoni.pil.bot.config.FeatureFlags;
 import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.jdbc.model.JdbcMember;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
@@ -576,7 +577,9 @@ public class TeamService {
 		boolean isTeamLead = signupForMember != null && signupForMember.isTeamLead();
 		if (teamLeadRole != null) {
 			if (DiscordRoleUtil.hasRole(discordMember, teamLeadRole) && !isTeamLead) {
-				removeRoles.add(teamLeadRole);
+				if (!FeatureFlags.DONT_REMOVE_CAPTAIN) {
+					removeRoles.add(teamLeadRole);
+				}
 			} else if (!DiscordRoleUtil.hasRole(discordMember, teamLeadRole) && isTeamLead) {
 				addRoles.add(teamLeadRole);
 			}
