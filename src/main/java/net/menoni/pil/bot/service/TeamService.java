@@ -583,6 +583,12 @@ public class TeamService {
 			} else if (!DiscordRoleUtil.hasRole(discordMember, teamLeadRole) && isTeamLead) {
 				addRoles.add(teamLeadRole);
 			}
+
+			if (FeatureFlags.DONT_REMOVE_CAPTAIN) {
+				if (DiscordRoleUtil.hasRole(discordMember, teamLeadRole)) {
+					isTeamLead = true;
+				}
+			}
 		}
 		List<JdbcTeam> teams = teamRepository.getAll();
 		for (JdbcTeam team : teams) {
@@ -612,7 +618,7 @@ public class TeamService {
 				// member check
 				Role teamMemberDivRole = getTeamMemberDivRole(playerTeam.getDivision());
 				if (teamMemberDivRole != null) {
-					allTeamDivRoles.remove(teamMemberDivRole);
+					allTeamDivRoles.removeIf(r -> Objects.equals(r.getId(), teamMemberDivRole.getId()));
 					if (!DiscordRoleUtil.hasRole(discordMember, teamMemberDivRole)) {
 						addRoles.add(teamMemberDivRole);
 					}
@@ -622,7 +628,7 @@ public class TeamService {
 				if (isTeamLead) {
 					Role teamCaptainDivRole = getTeamCaptainDivRole(playerTeam.getDivision());
 					if (teamCaptainDivRole != null) {
-						allTeamDivRoles.remove(teamCaptainDivRole);
+						allTeamDivRoles.removeIf(r -> Objects.equals(r.getId(), teamCaptainDivRole.getId()));
 						if (!DiscordRoleUtil.hasRole(discordMember, teamCaptainDivRole)) {
 							addRoles.add(teamCaptainDivRole);
 						}
@@ -705,7 +711,7 @@ public class TeamService {
 	}
 
 	private Role getTeamCaptainDivRole(int division) {
-		String roleId = bot.getConfig().getTeamMemberDivRole(division);
+		String roleId = bot.getConfig().getTeamCaptainDivRole(division);
 		if (roleId != null) {
 			return bot.getRoleById(roleId);
 		}
