@@ -17,5 +17,6 @@ public class JdbcTeamSignup {
 	private String trackmaniaName;
 	private String trackmaniaUuid;
 	private boolean teamLead;
+	private boolean hidden;
 
 }

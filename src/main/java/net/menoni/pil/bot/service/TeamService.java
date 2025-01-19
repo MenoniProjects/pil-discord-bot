@@ -110,7 +110,7 @@ public class TeamService {
 
 		divTeams.sort(Comparator.comparing(JdbcTeam::getDivision).thenComparing(t -> t.getName().toLowerCase()));
 
-		List<JdbcTeamSignup> allSignups = this.teamSignupRepository.getAllSignups();
+		List<JdbcTeamSignup> allSignups = this.teamSignupRepository.getAllSignups().stream().filter(s -> !s.isHidden()).toList();
 
 		List<List<String>> messages = new ArrayList<>();
 
@@ -227,17 +227,21 @@ public class TeamService {
 						.filter(s -> Objects.equals(s.getDiscordName().toLowerCase(), jdbcMember.getDiscordName().toLowerCase()))
 						.findAny()
 						.orElse(null);
+				boolean hidden = false;
 				boolean update = false;
 				if (signup != null) {
+					hidden = signup.isHidden();
 					if (!Objects.equals(jdbcMember.getTeamId(), signup.getTeamId())) {
 						jdbcMember.setTeamId(signup.getTeamId());
 						update = true;
 					}
-					if (!DiscordRoleUtil.hasRole(member, playerRole)) {
-						rolesToAdd.add(playerRole);
-					}
-					if (signup.isTeamLead() && !DiscordRoleUtil.hasRole(member, teamLeadRole)) {
-						rolesToAdd.add(teamLeadRole);
+					if (!hidden) {
+						if (!DiscordRoleUtil.hasRole(member, playerRole)) {
+							rolesToAdd.add(playerRole);
+						}
+						if (signup.isTeamLead() && !DiscordRoleUtil.hasRole(member, teamLeadRole)) {
+							rolesToAdd.add(teamLeadRole);
+						}
 					}
 
 					allTeams.stream().filter(t -> Objects.equals(t.getId(), signup.getTeamId())).findAny().ifPresent((playerTeam) -> {
@@ -380,7 +384,7 @@ public class TeamService {
 				for (CSVSignupMember csvSignupMember : csvSignupMembers) {
 					JdbcTeamSignup existingSignup = signupsForTeam.stream().filter(s -> Objects.equals(s.getTrackmaniaUuid(), csvSignupMember.trackmaniaUuid())).findAny().orElse(null);
 					if (existingSignup == null) {
-						existingSignup = new JdbcTeamSignup(null, teamId, csvSignupMember.discordName(), csvSignupMember.trackmaniaName(), csvSignupMember.trackmaniaUuid(), csvSignupMember.first());
+						existingSignup = new JdbcTeamSignup(null, teamId, csvSignupMember.discordName(), csvSignupMember.trackmaniaName(), csvSignupMember.trackmaniaUuid(), csvSignupMember.first(), false);
 						this.teamSignupRepository.saveSignup(existingSignup);
 						if (!newTeam) {
 							resultLines.add("Added **%s** to team **%s**".formatted(csvSignupMember.trackmaniaName(), teamForSignup.getName()));

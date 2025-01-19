@@ -18,7 +18,7 @@ public class TeamSignupRepository extends AbstractTypeRepository<JdbcTeamSignup>
 			return null;
 		}
 		return this.queryOne(
-				"SELECT id, team_id, discord_name, trackmania_name, trackmania_uuid, team_lead FROM team_signup WHERE trackmania_uuid = ?",
+				"SELECT id, team_id, discord_name, trackmania_name, trackmania_uuid, team_lead, hidden FROM team_signup WHERE trackmania_uuid = ?",
 				trackmaniaId
 		);
 	}
@@ -29,7 +29,7 @@ public class TeamSignupRepository extends AbstractTypeRepository<JdbcTeamSignup>
 		}
 		String name = member.getUser().getName();
 		return this.queryOne(
-				"SELECT id, team_id, discord_name, trackmania_name, trackmania_uuid, team_lead FROM team_signup WHERE discord_name = ?",
+				"SELECT id, team_id, discord_name, trackmania_name, trackmania_uuid, team_lead, hidden FROM team_signup WHERE discord_name = ?",
 				name
 		);
 	}
@@ -40,19 +40,20 @@ public class TeamSignupRepository extends AbstractTypeRepository<JdbcTeamSignup>
 		}
 		if (signup.getId() == null) {
 			GeneratedKeyHolder key = this.insertOne(
-					"INSERT INTO team_signup (team_id, discord_name, trackmania_name, trackmania_uuid, team_lead) VALUES (:teamId, :discordName, :trackmaniaName, :trackmaniaUuid, :teamLead)",
+					"INSERT INTO team_signup (team_id, discord_name, trackmania_name, trackmania_uuid, team_lead, hidden) VALUES (:teamId, :discordName, :trackmaniaName, :trackmaniaUuid, :teamLead, :hidden)",
 					signup
 			);
 			signup.setId(key.getKey().longValue());
 		} else {
 			this.update(
-					"UPDATE team_signup SET team_id = :teamId, discord_name = :discordName, trackmania_name = :trackmaniaName, trackmania_uuid = :trackmaniaUuid, team_lead = :teamLead WHERE id = :id",
+					"UPDATE team_signup SET team_id = :teamId, discord_name = :discordName, trackmania_name = :trackmaniaName, trackmania_uuid = :trackmaniaUuid, team_lead = :teamLead, hidden = :hidden WHERE id = :id",
 					NullableMap.create()
 							.add("teamId", signup.getTeamId())
 							.add("discordName", signup.getDiscordName())
 							.add("trackmaniaName", signup.getTrackmaniaName())
 							.add("trackmaniaUuid", signup.getTrackmaniaUuid())
 							.add("teamLead", signup.isTeamLead())
+							.add("hidden", signup.isHidden())
 							.add("id", signup.getId())
 			);
 		}
@@ -70,7 +71,7 @@ public class TeamSignupRepository extends AbstractTypeRepository<JdbcTeamSignup>
 	}
 
 	public List<JdbcTeamSignup> getAllSignups() {
-		return this.queryMany("SELECT id, team_id, discord_name, trackmania_name, trackmania_uuid, team_lead FROM team_signup");
+		return this.queryMany("SELECT id, team_id, discord_name, trackmania_name, trackmania_uuid, team_lead, hidden FROM team_signup");
 	}
 
 	public void deleteSignupsForTeam(Long teamId) {
