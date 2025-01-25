@@ -32,6 +32,7 @@ public class ChatCommandListener implements EventListener {
 			new ForceWinCommand(),
 			new HelpCommand(),
 			new MatchChannelCommand(),
+			new MatchCommand(),
 			new MissingPlayersCommand(),
 			new RefreshTeamsCommand(),
 			new TeamCommand(),
@@ -150,11 +151,13 @@ public class ChatCommandListener implements EventListener {
 		return true;
 	}
 
-	public static boolean requireBotCmdChannel(ApplicationContext applicationContext, GuildMessageChannelUnion channel) {
+	public static boolean requireBotCmdChannel(ApplicationContext applicationContext, GuildMessageChannelUnion channel, boolean silent) {
 		DiscordBot bot = applicationContext.getBean(DiscordBot.class);
 		boolean allow = Objects.equals(channel.getId(), bot.getConfig().getCmdChannelId());
 		if (!allow) {
-			channel.sendMessage("This command can only be executed in the bot-admin channel").queue();
+			if (!silent) {
+				channel.sendMessage("This command can only be executed in the bot-admin channel").queue();
+			}
 		}
 		return allow;
 	}

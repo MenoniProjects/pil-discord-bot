@@ -12,7 +12,6 @@ import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.jdbc.model.JdbcTeamSignup;
 import net.menoni.pil.bot.service.TeamService;
 import net.menoni.spring.commons.service.CsvService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
@@ -41,7 +40,7 @@ public class EventsExportCommand implements ChatCommand {
 
 	@Override
 	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, boolean silent) {
-		return ChatCommandListener.requireBotCmdChannel(applicationContext, channel);
+		return ChatCommandListener.requireBotCmdChannel(applicationContext, channel, silent);
 	}
 
 	@Override

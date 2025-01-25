@@ -46,7 +46,7 @@ public class MatchChannelCommand implements ChatCommand {
 
 	@Override
 	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, boolean silent) {
-		return ChatCommandListener.requireBotCmdChannel(applicationContext, channel);
+		return ChatCommandListener.requireBotCmdChannel(applicationContext, channel, silent);
 	}
 
 	@Override

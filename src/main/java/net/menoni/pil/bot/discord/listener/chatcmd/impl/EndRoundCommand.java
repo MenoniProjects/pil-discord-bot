@@ -39,7 +39,7 @@ public class EndRoundCommand implements ChatCommand {
 
 	@Override
 	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, boolean silent) {
-		return ChatCommandListener.requireBotCmdChannel(applicationContext, channel);
+		return ChatCommandListener.requireBotCmdChannel(applicationContext, channel, silent);
 	}
 
 	@Override
@@ -82,9 +82,14 @@ public class EndRoundCommand implements ChatCommand {
 		List<JdbcMatch> unfinishedMatches = matches.stream().filter(m -> m.getWinTeamId() == null).toList();
 		if (!unfinishedMatches.isEmpty()) {
 			StringBuilder sb = new StringBuilder("**Round has unfinished matches** _(resolve these first)_\n");
-			for (JdbcMatch m : unfinishedMatches) {
+			for (int i = 0; i < unfinishedMatches.size(); i++) {
+				JdbcMatch m = unfinishedMatches.get(i);
 				String display = getMatchDisplay(teams, bot, m);
 				sb.append("- ").append(display).append("\n");
+				if (sb.length() >= 1750) {
+					sb.append("-# and %d more...\n".formatted(unfinishedMatches.size() - i));
+					break;
+				}
 			}
 			reply(channel, "endround", sb.toString());
 			return true;

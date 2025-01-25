@@ -313,7 +313,8 @@ public class MatchChannelService extends ListenerAdapter {
 		JdbcTeam winTeam = teamService.getTeamById(winTeamSignup.getTeamId());
 		JdbcTeam loseTeam = teamService.getTeamById(Objects.equals(winTeamSignup.getTeamId(), match.getFirstTeamId()) ? match.getSecondTeamId() : match.getFirstTeamId());
 
-		event.reply("Marked match as won by %s with result: %s".formatted(
+		event.reply("<@%s> marked match as won by %s with result: %s".formatted(
+				event.getUser().getId(),
 				DiscordFormattingUtil.roleAsString(winTeam.getDiscordRoleId()),
 				parsedMatchScore.print()
 		)).setEphemeral(false).queue();

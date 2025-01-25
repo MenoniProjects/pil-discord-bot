@@ -99,7 +99,8 @@ public class WinCommand implements ChatCommand {
 		JdbcTeam winTeam = teamService.getTeamById(teamMemberSignup.getTeamId());
 		JdbcTeam loseTeam = teamService.getTeamById(Objects.equals(teamMemberSignup.getTeamId(), match.getFirstTeamId()) ? match.getSecondTeamId() : match.getFirstTeamId());
 
-		reply(channel, alias, "Marked match as won by %s with result: %s".formatted(
+		reply(channel, alias, "<@%s> marked match as won by %s with result: %s".formatted(
+				member.getId(),
 				DiscordFormattingUtil.roleAsString(winTeam.getDiscordRoleId()),
 				parsedMatchScore.print()
 		));
