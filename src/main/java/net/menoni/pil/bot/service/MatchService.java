@@ -5,16 +5,14 @@ import net.dv8tion.jda.api.utils.FileUpload;
 import net.menoni.pil.bot.jdbc.model.JdbcMatch;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.jdbc.repository.MatchRepository;
+import net.menoni.pil.bot.util.DiscordFormattingUtil;
 import net.menoni.pil.bot.util.RoundType;
 import net.menoni.spring.commons.service.CsvService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -27,6 +25,42 @@ public class MatchService {
 	private TeamService teamService;
 	@Autowired
 	private CsvService csvService;
+
+	public String createLeagueMatchesResultsMessage(List<JdbcTeam> teams, List<JdbcMatch> matches, int round) {
+		matches.sort(Comparator.comparingInt(JdbcMatch::getDivision).thenComparingLong(JdbcMatch::getId));
+
+		StringBuilder sb = new StringBuilder("# Round %d\n".formatted(round));
+		int div = 0;
+		for (JdbcMatch match : matches) {
+			if (match.getDivision() != div) {
+				div = match.getDivision();
+				sb.append("## Division %d:\n".formatted(div));
+			}
+			JdbcTeam winTeam = teams.stream().filter(t -> t.getId().equals(match.getWinTeamId())).findFirst().orElse(null);
+			JdbcTeam loseTeam = teams.stream().filter(t -> t.getId().equals(Objects.equals(match.getFirstTeamId(), match.getWinTeamId()) ? match.getSecondTeamId() : match.getFirstTeamId())).findFirst().orElse(null);
+
+			String winTeamEmote = DiscordFormattingUtil.teamEmoteAsString(winTeam);
+			String loseTeamEmote = DiscordFormattingUtil.teamEmoteAsString(loseTeam);
+			String winTeamName = DiscordFormattingUtil.teamName(winTeam);
+			String loseTeamName = DiscordFormattingUtil.teamName(loseTeam);
+
+			sb.append("%s **%s** vs %s **%s**: %s\n".formatted(
+					winTeamEmote,
+					winTeamName,
+					loseTeamEmote,
+					loseTeamName,
+					formatMatchScore(match)
+			));
+		}
+		return sb.toString();
+	}
+
+	private String formatMatchScore(JdbcMatch match) {
+		if (match.getWinTeamScore() == 0 && match.getLoseTeamScore() == 0) {
+			return "2-0 / FF";
+		}
+		return match.getWinTeamScore() + "-" + match.getLoseTeamScore();
+	}
 
 	public void setMatchChannel(int division, int roundNumber, Long firstTeamId, Long secondTeamId, String matchChannelId, String pinMessageId) {
 		JdbcMatch match = matchRepository.find(division, roundNumber, firstTeamId, secondTeamId);

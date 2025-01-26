@@ -7,7 +7,9 @@ import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.menoni.pil.bot.discord.listener.ChatCommandListener;
 import net.menoni.pil.bot.discord.listener.chatcmd.ChatCommand;
 import net.menoni.pil.bot.jdbc.model.JdbcMatch;
+import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.service.MatchService;
+import net.menoni.pil.bot.service.TeamService;
 import org.springframework.context.ApplicationContext;
 
 import java.util.*;
@@ -43,6 +45,8 @@ public class MatchCommand implements ChatCommand {
 
 		if (args[0].equalsIgnoreCase("round")) {
 			this._exec_round(applicationContext, channel, member, message, alias, args);
+		} else if (args[0].equalsIgnoreCase("result")) {
+			this._exec_result(applicationContext, channel, member, message, alias, args);
 		} else {
 			sendHelp(channel, "Invalid option '" + args[0].toLowerCase() + "'");
 		}
@@ -54,11 +58,36 @@ public class MatchCommand implements ChatCommand {
 	public Collection<String> help() {
 		return List.of(
 				"!match -- show help",
-				"!match round <round-number> -- show status of matches for specified round"
+				"!match round <round-number> -- show status of matches for specified round",
+				"!match result <round-number> -- print results message in league results format"
 		);
 	}
 
-	public void _exec_round(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) {
+	private void _exec_result(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) {
+		if (args.length < 2) {
+			sendHelp(channel, "Round number input required");
+			return;
+		}
+
+		int roundNum = -1;
+		try {
+			roundNum = Integer.parseInt(args[1]);
+		} catch (NumberFormatException ex) {
+			reply(channel, alias, "Invalid round-num input - expected number");
+			return;
+		}
+
+		MatchService matchService = applicationContext.getBean(MatchService.class);
+		TeamService teamService = applicationContext.getBean(TeamService.class);
+
+		List<JdbcMatch> matches = matchService.getMatchesForRound(roundNum);
+		List<JdbcTeam> teams = teamService.getAllTeams();
+
+		channel.sendMessage(matchService.createLeagueMatchesResultsMessage(teams, matches, roundNum)).queue();
+	}
+
+
+	private void _exec_round(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) {
 		if (args.length < 2) {
 			sendHelp(channel, "Round number input required");
 			return;

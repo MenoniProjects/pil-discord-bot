@@ -104,32 +104,7 @@ public class EndRoundCommand implements ChatCommand {
 		JDAUtil.queueAndWait(channel.sendMessage("Round data CSV").addFiles(csv));
 
 		if (roundType == RoundType.LEAGUE) {
-			matches.sort(Comparator.comparingInt(JdbcMatch::getDivision).thenComparingLong(JdbcMatch::getId));
-
-			StringBuilder sb = new StringBuilder("# Round %d\n".formatted(round));
-			int div = 0;
-			for (JdbcMatch match : matches) {
-				if (match.getDivision() != div) {
-					div = match.getDivision();
-					sb.append("## Division %d:\n".formatted(div));
-				}
-				JdbcTeam winTeam = teams.stream().filter(t -> t.getId().equals(match.getWinTeamId())).findFirst().orElse(null);
-				JdbcTeam loseTeam = teams.stream().filter(t -> t.getId().equals(Objects.equals(match.getFirstTeamId(), match.getWinTeamId()) ? match.getSecondTeamId() : match.getWinTeamId())).findFirst().orElse(null);
-
-				String winTeamEmote = DiscordFormattingUtil.teamEmoteAsString(winTeam);
-				String loseTeamEmote = DiscordFormattingUtil.teamEmoteAsString(loseTeam);
-				String winTeamName = DiscordFormattingUtil.teamName(winTeam);
-				String loseTeamName = DiscordFormattingUtil.teamName(loseTeam);
-
-				sb.append("%s %s vs %s %s: %s".formatted(
-						winTeamEmote,
-						winTeamName,
-						loseTeamEmote,
-						loseTeamName,
-						formatMatchScore(match)
-				));
-			}
-			channel.sendMessage(sb.toString()).queue();
+			channel.sendMessage(matchService.createLeagueMatchesResultsMessage(teams, matches, round)).queue();
 		}
 
 		return true;
@@ -156,13 +131,6 @@ public class EndRoundCommand implements ChatCommand {
 		String firstTeamName = teams.stream().filter(t -> Objects.equals(t.getId(), match.getFirstTeamId())).findAny().map(JdbcTeam::getName).orElse("unknown(?)");
 		String secondTeamName = teams.stream().filter(t -> Objects.equals(t.getId(), match.getSecondTeamId())).findAny().map(JdbcTeam::getName).orElse("unknown(?)");
 		return firstTeamName + " vs " + secondTeamName + " (no channel found)";
-	}
-
-	private String formatMatchScore(JdbcMatch match) {
-		if (match.getWinTeamScore() == 0 && match.getLoseTeamScore() == 0) {
-			return "2-0 / FF";
-		}
-		return match.getWinTeamScore() + "-" + match.getLoseTeamScore();
 	}
 
 }
