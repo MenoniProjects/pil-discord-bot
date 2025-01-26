@@ -4,10 +4,12 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
+import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.menoni.jda.commons.util.JDAUtil;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Collection;
+import java.util.function.Function;
 
 public interface ChatCommand {
 
@@ -24,8 +26,15 @@ public interface ChatCommand {
 	boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, boolean silent);
 
 	default void reply(GuildMessageChannelUnion channel, String alias, String message) {
+		reply(channel, alias, message, null);
+	}
+
+	default void reply(GuildMessageChannelUnion channel, String alias, String message, Function<MessageCreateAction, MessageCreateAction> modifier) {
+		if (modifier == null) {
+			modifier = m -> m;
+		}
 		try {
-			JDAUtil.completableFutureQueue(channel.sendMessage("**%s**: %s".formatted(alias, message))).join();
+			JDAUtil.completableFutureQueue(modifier.apply(channel.sendMessage("**%s**: %s".formatted(alias, message)))).join();
 		} catch (Throwable e) {
 			String channelName = channel != null ? "#" + channel.getName() : "null-channel";
 			System.err.println("failed to send message to %s:\n%s\n%s".formatted(

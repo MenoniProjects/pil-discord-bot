@@ -201,7 +201,7 @@ public class MatchChannelCommand implements ChatCommand {
 					divNumFinal,
 					roundNumFinal,
 					extra
-			));
+			), m -> m.setAllowedMentions(List.of()));
 		});
 		try {
 			future.join();
