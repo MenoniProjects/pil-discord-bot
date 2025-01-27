@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
+import net.menoni.pil.bot.config.FeatureFlags;
 import net.menoni.pil.bot.discord.listener.ChatCommandListener;
 import net.menoni.pil.bot.discord.listener.chatcmd.ChatCommand;
 import net.menoni.pil.bot.service.SignupSheetService;
@@ -41,6 +42,10 @@ public class RefreshTeamsCommand implements ChatCommand {
 	@Override
 	public boolean execute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) {
 		if (args.length > 0 && args[0].equalsIgnoreCase("sheet")) {
+			if (FeatureFlags.DISABLE_REGISTRATION) {
+				reply(channel, alias, "Registrations are closed");
+				return true;
+			}
 			SignupSheetService signupSheetService = applicationContext.getBean(SignupSheetService.class);
 			try {
 				List<String> res = signupSheetService.runManualSignupSheetImport();

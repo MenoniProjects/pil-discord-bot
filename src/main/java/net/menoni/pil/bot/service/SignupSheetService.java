@@ -4,6 +4,7 @@ import com.opencsv.exceptions.CsvException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.menoni.pil.bot.config.FeatureFlags;
 import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.jda.commons.util.JDAUtil;
 import net.menoni.spring.commons.service.CsvService;
@@ -46,6 +47,9 @@ public class SignupSheetService {
 
 //	@Scheduled(cron = "0 0 * * * *")
 	public void signupSheetImportScheduling() {
+		if (FeatureFlags.DISABLE_REGISTRATION) {
+			return;
+		}
 		log.info("Starting hourly signup-sheet-import");
 		try {
 			_runSignupsSheetImport();

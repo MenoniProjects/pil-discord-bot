@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.menoni.pil.bot.config.FeatureFlags;
 import net.menoni.pil.bot.discord.command.CommandHandler;
 import net.menoni.pil.bot.service.TeamService;
 import net.menoni.spring.commons.service.CsvService;
@@ -33,6 +34,11 @@ public class ImportSignupsCommandHandler extends CommandHandler {
 
     @Override
     public void handle(Guild guild, MessageChannelUnion channel, Member member, SlashCommandInteractionEvent event) {
+        if (FeatureFlags.DISABLE_REGISTRATION) {
+            replyPrivate(event, "Registrations are closed");
+            return;
+        }
+
         OptionMapping csvOption = event.getOption("csv");
         if (csvOption == null) {
             replyPrivate(event, "Missing CSV");
