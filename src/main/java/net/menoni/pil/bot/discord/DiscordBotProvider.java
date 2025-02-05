@@ -16,7 +16,7 @@ public class DiscordBotProvider {
     @Bean
     @ConditionalOnProperty(value = "jda.bot.startup-test", havingValue = "false")
     public DiscordBot discordBot(AutowireCapableBeanFactory beanFactory) throws InterruptedException {
-        return new DiscordBot(this.config, beanFactory);
+        return new DiscordBot(this.config, beanFactory, false);
     }
 
     @Bean

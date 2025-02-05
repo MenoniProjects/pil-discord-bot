@@ -47,12 +47,14 @@ public class DiscordBot extends AbstractDiscordBot<DiscordBotConfig> {
 
     public DiscordBot(
             DiscordBotConfig config,
-            AutowireCapableBeanFactory autowireCapableBeanFactory
+            AutowireCapableBeanFactory autowireCapableBeanFactory,
+            boolean test
     ) throws InterruptedException {
         super(
                 "pil-bot",
                 config,
                 autowireCapableBeanFactory,
+                test,
                 PERMISSIONS,
                 INTENTS,
                 ENABLED_CACHES,

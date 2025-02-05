@@ -10,7 +10,7 @@ import java.util.function.Function;
 public class DiscordBotTest extends DiscordBot {
 
 	public DiscordBotTest(DiscordBotConfig config, AutowireCapableBeanFactory autowireCapableBeanFactory) throws InterruptedException {
-		super(config, autowireCapableBeanFactory);
+		super(config, autowireCapableBeanFactory, true);
 	}
 
 	@Override
