@@ -8,10 +8,10 @@ import java.util.regex.Pattern;
 public enum RoundType {
 
 	TEST(-99, "Test", (division, roundNum, teamName1, teamName2) -> "test-%s-%s".formatted(teamName1, teamName2), false),
-	SPECIAL(-1, "Special", (division, roundNum, teamName1, teamName2) -> "special-%s-%s".formatted(teamName1, teamName2), false),
-	LEAGUE(0, "League", (division, roundNum, teamName1, teamName2) -> "d%dr%d-league-%s-%s".formatted(division, roundNum, teamName1, teamName2)),
-	PLAYOFFS(10, "Play-offs", (division, roundNum, teamName1, teamName2) -> "d%dr%d-playoff-%s-%s".formatted(division, roundNum, teamName1, teamName2)),
-	GRAND_FINAL(20, "Grand Final", (division, roundNum, teamName1, teamName2) -> "d%d-grandfinal-%s-%s".formatted(division, teamName1, teamName2)),
+	SPECIAL(-1, "Special", (division, roundNum, teamName1, teamName2) -> "s-%s-%s".formatted(teamName1, teamName2), false),
+	LEAGUE(0, "League", (division, roundNum, teamName1, teamName2) -> "d%dr%d-lg-%s-%s".formatted(division, roundNum, teamName1, teamName2)),
+	PLAYOFFS(10, "Play-offs", (division, roundNum, teamName1, teamName2) -> "d%dr%d-po-%s-%s".formatted(division, roundNum, teamName1, teamName2)),
+	GRAND_FINAL(20, "Grand Final", (division, roundNum, teamName1, teamName2) -> "d%d-gf-%s-%s".formatted(division, teamName1, teamName2)),
 	;
 
 	private final int start;
