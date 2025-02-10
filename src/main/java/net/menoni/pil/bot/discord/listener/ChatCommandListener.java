@@ -148,6 +148,10 @@ public class ChatCommandListener implements EventListener {
 		if (!event.getMessage().getContentRaw().startsWith("!")) {
 			return false;
 		}
+		// not usable in public channels
+		if (event.getGuild().getPublicRole().hasPermission(event.getGuildChannel(), Permission.VIEW_CHANNEL)) {
+			return false;
+		}
 		return true;
 	}
 
