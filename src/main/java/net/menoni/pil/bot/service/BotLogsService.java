@@ -7,6 +7,7 @@ import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.util.DiscordArgUtil;
 import net.menoni.pil.bot.util.DiscordFormattingUtil;
+import net.menoni.pil.bot.util.RoundType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,16 +31,28 @@ public class BotLogsService {
 	}
 
 	public void reportMatchWin(Member member, Integer division, Integer roundNumber, JdbcTeam winTeam, JdbcTeam loseTeam, DiscordArgUtil.ParsedMatchScore parsedMatchScore) {
+		RoundType type = RoundType.forRoundNumber(roundNumber);
+		String typeName = "unknown";
+		if (type != null) {
+			roundNumber = type.adjustRoundNumber(roundNumber);
+			typeName = type.getDisplayName();
+		}
 		this.log(
-				"{} reported match (div: {}, round: {}, {} vs {}) as won by {} with result: {}",
-				member, division, roundNumber, winTeam, loseTeam, winTeam, parsedMatchScore
+				"{} reported match (type: {}, div: {}, round: {}, {} vs {}) as won by {} with result: {}",
+				typeName, member, division, roundNumber, winTeam, loseTeam, winTeam, parsedMatchScore
 		);
 	}
 
 	public void reportMatchForceWin(Member member, Integer divNumber, Integer roundNumber, JdbcTeam winTeam, JdbcTeam loseTeam, DiscordArgUtil.ParsedMatchScore parsedMatchScore) {
+		RoundType type = RoundType.forRoundNumber(roundNumber);
+		String typeName = "unknown";
+		if (type != null) {
+			roundNumber = type.adjustRoundNumber(roundNumber);
+			typeName = type.getDisplayName();
+		}
 		this.log(
-				"{} force-reported match (div: {}, round: {}, {} vs {}) as won by {} with result: {}",
-				member, divNumber, roundNumber, winTeam, loseTeam, winTeam, parsedMatchScore
+				"{} force-reported match (type: {}, div: {}, round: {}, {} vs {}) as won by {} with result: {}",
+				typeName, member, divNumber, roundNumber, winTeam, loseTeam, winTeam, parsedMatchScore
 		);
 	}
 
