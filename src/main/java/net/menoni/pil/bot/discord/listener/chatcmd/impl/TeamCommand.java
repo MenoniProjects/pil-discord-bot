@@ -97,7 +97,6 @@ public class TeamCommand implements ChatCommand {
 				"!team export -- export CSV of team data for xeru script"
 		);
 	}
-
 	private boolean _execute_list(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) {
 		TeamService teamService = applicationContext.getBean(TeamService.class);
 		TeamSignupRepository signups = applicationContext.getBean(TeamSignupRepository.class);
