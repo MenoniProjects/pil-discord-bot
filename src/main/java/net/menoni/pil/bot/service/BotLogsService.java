@@ -39,7 +39,7 @@ public class BotLogsService {
 		}
 		this.log(
 				"{} reported match (type: {}, div: {}, round: {}, {} vs {}) as won by {} with result: {}",
-				typeName, member, division, roundNumber, winTeam, loseTeam, winTeam, parsedMatchScore
+				member, typeName, division, roundNumber, winTeam, loseTeam, winTeam, parsedMatchScore
 		);
 	}
 
@@ -52,7 +52,7 @@ public class BotLogsService {
 		}
 		this.log(
 				"{} force-reported match (type: {}, div: {}, round: {}, {} vs {}) as won by {} with result: {}",
-				typeName, member, divNumber, roundNumber, winTeam, loseTeam, winTeam, parsedMatchScore
+				member, typeName, divNumber, roundNumber, winTeam, loseTeam, winTeam, parsedMatchScore
 		);
 	}
 
