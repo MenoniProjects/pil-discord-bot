@@ -22,7 +22,7 @@ public class MatchRepository extends AbstractTypeRepository<JdbcMatch> {
 	public JdbcMatch find(int division, int roundNumber, Long firstTeamId, Long secondTeamId) {
 		return this.queryOne(
 				"SELECT id, division, round_number, first_team_id, second_team_id, match_channel_id, pin_message_id, win_team_id, win_team_score, lose_team_score FROM `match` WHERE division = ? AND round_number = ? AND " +
-						"(first_team_id = ? AND second_team_id = ?) OR (second_team_id = ? AND first_team_id = ?)",
+						"((first_team_id = ? AND second_team_id = ?) OR (second_team_id = ? AND first_team_id = ?))",
 				division, roundNumber, firstTeamId, secondTeamId, firstTeamId, secondTeamId
 		);
 	}
