@@ -200,6 +200,9 @@ public class TeamService {
 	}
 
 	private void updateMemberRolesAfterCsvImport() {
+		if (FeatureFlags.DISABLE_ROLE_CHANGES) {
+			return;
+		}
 		Role playerRole = bot.getPlayerRole();
 		Role teamLeadRole = bot.getTeamLeadRole();
 		Set<Role> teamCaptainDivRoles = getTeamCaptainDivRoles();
@@ -568,6 +571,9 @@ public class TeamService {
 	}
 
 	public boolean ensurePlayerRoles(Member discordMember, JdbcMember botMember, Role playerRole, Role teamLeadRole) {
+		if (FeatureFlags.DISABLE_ROLE_CHANGES) {
+			return false;
+		}
 		List<Role> addRoles = new ArrayList<>();
 		List<Role> removeRoles = new ArrayList<>();
 		if (playerRole != null) {
