@@ -1,4 +1,4 @@
-package net.menoni.pil.bot.discord.listener.chatcmd.impl;
+package net.menoni.pil.bot.discord.command.chat;
 
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
@@ -6,20 +6,22 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.dv8tion.jda.api.utils.FileUpload;
+import net.menoni.jda.commons.discord.chatcommand.ChatCommand;
+import net.menoni.jda.commons.util.JDAUtil;
 import net.menoni.pil.bot.discord.DiscordBot;
-import net.menoni.pil.bot.discord.listener.ChatCommandListener;
-import net.menoni.pil.bot.discord.listener.chatcmd.ChatCommand;
+import net.menoni.pil.bot.discord.command.ChatCommandSupport;
 import net.menoni.pil.bot.jdbc.model.JdbcMatch;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.service.MatchChannelService;
 import net.menoni.pil.bot.service.MatchService;
 import net.menoni.pil.bot.service.TeamService;
-import net.menoni.pil.bot.util.DiscordFormattingUtil;
-import net.menoni.jda.commons.util.JDAUtil;
 import net.menoni.pil.bot.util.RoundType;
 import org.springframework.context.ApplicationContext;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 public class EndRoundCommand implements ChatCommand {
 	@Override
@@ -39,7 +41,7 @@ public class EndRoundCommand implements ChatCommand {
 
 	@Override
 	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, boolean silent) {
-		return ChatCommandListener.requireBotCmdChannel(applicationContext, channel, silent);
+		return ChatCommandSupport.requireBotCmdChannel(applicationContext, channel, silent);
 	}
 
 	@Override

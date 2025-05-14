@@ -7,8 +7,13 @@ import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
-import net.menoni.pil.bot.discord.command.CommandHandler;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
+import net.menoni.jda.commons.discord.command.CommandHandler;
+import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.jdbc.model.JdbcMatch;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.jdbc.model.JdbcTeamSignup;
@@ -24,20 +29,27 @@ import java.util.List;
 import java.util.Objects;
 
 @Slf4j
-public class WinCommandHandler extends CommandHandler {
+public class WinCommandHandler extends CommandHandler<DiscordBot> {
 
 	@Autowired private TeamService teamService;
 	@Autowired private MatchService matchService;
 	@Autowired private BotLogsService botLogsService;
 	@Autowired private MatchChannelService matchChannelService;
 
-	public WinCommandHandler() {
-		super("win");
+	public WinCommandHandler(DiscordBot bot) {
+		super(bot, "win");
 	}
 
 	@Override
-	public boolean adminChannelOnly() {
-		return false;
+	public boolean allowCommand(Guild g, MessageChannelUnion channel, Member member, SlashCommandInteractionEvent event, boolean silent) {
+		return Objects.equals(channel.getId(), getBot().getConfig().getCmdChannelId());
+	}
+
+	@Override
+	public SlashCommandData getSlashCommandData() {
+		return Commands.slash("win", "Submit your win and score for this match")
+				.setDefaultPermissions(DefaultMemberPermissions.ENABLED)
+				.addOption(OptionType.STRING, "score", "The match score or ff", true, true);
 	}
 
 	@Override

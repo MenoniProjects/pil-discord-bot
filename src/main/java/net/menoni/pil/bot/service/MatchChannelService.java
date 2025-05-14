@@ -21,7 +21,6 @@ import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.jdbc.model.JdbcMatch;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.jdbc.model.JdbcTeamSignup;
-import net.menoni.pil.bot.jdbc.repository.MatchRepository;
 import net.menoni.pil.bot.util.DiscordArgUtil;
 import net.menoni.pil.bot.util.DiscordFormattingUtil;
 import net.menoni.pil.bot.util.RoundType;
@@ -44,8 +43,6 @@ public class MatchChannelService extends ListenerAdapter {
 	@Autowired private TeamService teamService;
 	@Autowired private MatchService matchService;
 	@Autowired private BotLogsService botLogsService;
-	@Autowired
-	private MatchRepository matchRepository;
 
 	@PostConstruct
 	public void init() {

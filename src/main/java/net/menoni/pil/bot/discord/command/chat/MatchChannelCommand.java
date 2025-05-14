@@ -1,4 +1,4 @@
-package net.menoni.pil.bot.discord.listener.chatcmd.impl;
+package net.menoni.pil.bot.discord.command.chat;
 
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.Permission;
@@ -10,9 +10,9 @@ import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 import net.dv8tion.jda.api.requests.ErrorResponse;
+import net.menoni.jda.commons.discord.chatcommand.ChatCommand;
 import net.menoni.pil.bot.discord.DiscordBot;
-import net.menoni.pil.bot.discord.listener.ChatCommandListener;
-import net.menoni.pil.bot.discord.listener.chatcmd.ChatCommand;
+import net.menoni.pil.bot.discord.command.ChatCommandSupport;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.service.MatchChannelService;
 import net.menoni.pil.bot.service.TeamService;
@@ -46,7 +46,7 @@ public class MatchChannelCommand implements ChatCommand {
 
 	@Override
 	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, boolean silent) {
-		return ChatCommandListener.requireBotCmdChannel(applicationContext, channel, silent);
+		return ChatCommandSupport.requireBotCmdChannel(applicationContext, channel, silent);
 	}
 
 	@Override

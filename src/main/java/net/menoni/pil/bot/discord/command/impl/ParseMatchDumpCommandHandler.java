@@ -2,16 +2,21 @@ package net.menoni.pil.bot.discord.command.impl;
 
 import com.opencsv.exceptions.CsvException;
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import net.dv8tion.jda.api.utils.AttachedFile;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
-import net.menoni.pil.bot.discord.command.CommandHandler;
+import net.menoni.jda.commons.discord.command.CommandHandler;
+import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.jdbc.model.JdbcTeamSignup;
 import net.menoni.pil.bot.match.*;
@@ -26,18 +31,25 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class ParseMatchDumpCommandHandler extends CommandHandler {
+public class ParseMatchDumpCommandHandler extends CommandHandler<DiscordBot> {
 
 	@Autowired private TeamService teamService;
 	@Autowired private CsvService csvService;
 
-	public ParseMatchDumpCommandHandler() {
-		super("parsematchdump");
+	public ParseMatchDumpCommandHandler(DiscordBot bot) {
+		super(bot, "parsematchdump");
 	}
 
 	@Override
-	public boolean adminChannelOnly() {
-		return true;
+	public boolean allowCommand(Guild g, MessageChannelUnion channel, Member member, SlashCommandInteractionEvent event, boolean silent) {
+		return Objects.equals(channel.getId(), getBot().getConfig().getCmdChannelId());
+	}
+
+	@Override
+	public SlashCommandData getSlashCommandData() {
+		return Commands.slash("parsematchdump", "Parse Match dump from CSV")
+				.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_ROLES))
+				.addOption(OptionType.ATTACHMENT, "csv", "Match dump CSV file", true);
 	}
 
 	@Override

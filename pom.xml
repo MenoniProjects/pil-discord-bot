@@ -6,14 +6,14 @@
 
   <groupId>net.menoni</groupId>
   <artifactId>pil-discord-bot</artifactId>
-  <version>1.13-CE</version>
+  <version>1.14.10-IE</version>
 
   <name>pil-discord-bot</name>
 
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.4.0</version>
+    <version>3.4.5</version>
   </parent>
 
   <properties>
@@ -23,7 +23,7 @@
     <java.version>17</java.version>
     <!-- dependency versions -->
     <menoni.spring.commons.version>1.6.1</menoni.spring.commons.version>
-    <menoni.jda.commons.version>5.2.1_12</menoni.jda.commons.version>
+    <menoni.ws.discord>1.0.0-SNAPSHOT</menoni.ws.discord>
     <guava.version>33.4.0-jre</guava.version>
     <junit.version>4.13.2</junit.version>
   </properties>
@@ -32,14 +32,13 @@
     <!-- menoni -->
     <dependency>
       <groupId>net.menoni</groupId>
-      <artifactId>menoni-spring-commons</artifactId>
-      <version>${menoni.spring.commons.version}</version>
+      <artifactId>menoni-ws-discord</artifactId>
+      <version>${menoni.ws.discord}</version>
     </dependency>
-    <!-- menoni jda -->
     <dependency>
       <groupId>net.menoni</groupId>
-      <artifactId>jda-commons</artifactId>
-      <version>${menoni.jda.commons.version}</version>
+      <artifactId>menoni-spring-commons</artifactId>
+      <version>${menoni.spring.commons.version}</version>
     </dependency>
     <!-- spring -->
     <dependency>

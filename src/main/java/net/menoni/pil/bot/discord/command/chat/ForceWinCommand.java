@@ -1,11 +1,11 @@
-package net.menoni.pil.bot.discord.listener.chatcmd.impl;
+package net.menoni.pil.bot.discord.command.chat;
 
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
-import net.menoni.pil.bot.discord.listener.ChatCommandListener;
-import net.menoni.pil.bot.discord.listener.chatcmd.ChatCommand;
+import net.menoni.jda.commons.discord.chatcommand.ChatCommand;
+import net.menoni.pil.bot.discord.command.ChatCommandSupport;
 import net.menoni.pil.bot.jdbc.model.JdbcMatch;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.service.BotLogsService;
@@ -37,7 +37,7 @@ public class ForceWinCommand implements ChatCommand {
 
 	@Override
 	public boolean canExecute(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, boolean silent) {
-		return ChatCommandListener.requireBotCmdChannelOrMatchChannel(applicationContext, channel);
+		return ChatCommandSupport.requireBotCmdChannelOrMatchChannel(applicationContext, channel);
 	}
 
 	@Override

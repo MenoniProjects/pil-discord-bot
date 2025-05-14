@@ -1,4 +1,4 @@
-package net.menoni.pil.bot.discord.listener.chatcmd.impl;
+package net.menoni.pil.bot.discord.command.chat;
 
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.Permission;
@@ -6,8 +6,8 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
+import net.menoni.jda.commons.discord.chatcommand.ChatCommand;
 import net.menoni.pil.bot.discord.DiscordBot;
-import net.menoni.pil.bot.discord.listener.chatcmd.ChatCommand;
 import net.menoni.pil.bot.jdbc.model.JdbcMatch;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.jdbc.model.JdbcTeamSignup;

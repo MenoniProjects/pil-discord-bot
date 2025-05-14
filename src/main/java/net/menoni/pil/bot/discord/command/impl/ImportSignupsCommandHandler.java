@@ -1,13 +1,19 @@
 package net.menoni.pil.bot.discord.command.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.InteractionHook;
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
+import net.menoni.jda.commons.discord.command.CommandHandler;
 import net.menoni.pil.bot.config.FeatureFlags;
-import net.menoni.pil.bot.discord.command.CommandHandler;
+import net.menoni.pil.bot.discord.DiscordBot;
 import net.menoni.pil.bot.service.TeamService;
 import net.menoni.spring.commons.service.CsvService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,20 +22,28 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
-public class ImportSignupsCommandHandler extends CommandHandler {
+public class ImportSignupsCommandHandler extends CommandHandler<DiscordBot> {
 
     @Autowired private TeamService teamService;
     @Autowired private CsvService csvService;
 
-    public ImportSignupsCommandHandler() {
-        super("importsignups");
+    public ImportSignupsCommandHandler(DiscordBot bot) {
+        super(bot, "importsignups");
     }
 
     @Override
-    public boolean adminChannelOnly() {
-        return true;
+    public boolean allowCommand(Guild guild, MessageChannelUnion channel, Member member, SlashCommandInteractionEvent slashCommandInteractionEvent, boolean silent) {
+        return Objects.equals(channel.getId(), getBot().getConfig().getCmdChannelId());
+    }
+
+    @Override
+    public SlashCommandData getSlashCommandData() {
+        return Commands.slash("importsignups", "Import signups from CSV")
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_ROLES))
+                .addOption(OptionType.ATTACHMENT, "csv", "Signups CSV file", true);
     }
 
     @Override
