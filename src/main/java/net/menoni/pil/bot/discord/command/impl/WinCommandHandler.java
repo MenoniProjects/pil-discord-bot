@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -48,6 +49,7 @@ public class WinCommandHandler extends CommandHandler<DiscordBot> {
 	@Override
 	public SlashCommandData getSlashCommandData() {
 		return Commands.slash("win", "Submit your win and score for this match")
+				.setContexts(InteractionContextType.GUILD)
 				.setDefaultPermissions(DefaultMemberPermissions.ENABLED)
 				.addOption(OptionType.STRING, "score", "The match score or ff", true, true);
 	}

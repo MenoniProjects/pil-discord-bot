@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -48,6 +49,7 @@ public class ParseMatchDumpCommandHandler extends CommandHandler<DiscordBot> {
 	@Override
 	public SlashCommandData getSlashCommandData() {
 		return Commands.slash("parsematchdump", "Parse Match dump from CSV")
+				.setContexts(InteractionContextType.GUILD)
 				.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_ROLES))
 				.addOption(OptionType.ATTACHMENT, "csv", "Match dump CSV file", true);
 	}
