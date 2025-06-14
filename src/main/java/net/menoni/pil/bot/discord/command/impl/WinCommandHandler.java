@@ -43,7 +43,17 @@ public class WinCommandHandler extends CommandHandler<DiscordBot> {
 
 	@Override
 	public boolean allowCommand(Guild g, MessageChannelUnion channel, Member member, SlashCommandInteractionEvent event, boolean silent) {
-		return Objects.equals(channel.getId(), getBot().getConfig().getCmdChannelId());
+		boolean allow = Objects.equals(channel.getId(), getBot().getConfig().getCmdChannelId());
+		if (!allow) {
+			JdbcMatch match = matchService.getMatchForChannel(channel.getId());
+			if (match != null) {
+				allow = true;
+			}
+		}
+		if (!allow && !silent) {
+			replyPrivate(event, "Command is only allowed in a match channel or command channel");
+		}
+		return allow;
 	}
 
 	@Override

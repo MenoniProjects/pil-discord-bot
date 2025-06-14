@@ -43,7 +43,11 @@ public class ParseMatchDumpCommandHandler extends CommandHandler<DiscordBot> {
 
 	@Override
 	public boolean allowCommand(Guild g, MessageChannelUnion channel, Member member, SlashCommandInteractionEvent event, boolean silent) {
-		return Objects.equals(channel.getId(), getBot().getConfig().getCmdChannelId());
+		boolean allow = Objects.equals(channel.getId(), getBot().getConfig().getCmdChannelId());
+		if (!allow && !silent) {
+			replyPrivate(event, "Command is only allowed in command channel");
+		}
+		return allow;
 	}
 
 	@Override

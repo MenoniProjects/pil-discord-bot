@@ -36,8 +36,12 @@ public class ImportSignupsCommandHandler extends CommandHandler<DiscordBot> {
     }
 
     @Override
-    public boolean allowCommand(Guild guild, MessageChannelUnion channel, Member member, SlashCommandInteractionEvent slashCommandInteractionEvent, boolean silent) {
-        return Objects.equals(channel.getId(), getBot().getConfig().getCmdChannelId());
+    public boolean allowCommand(Guild guild, MessageChannelUnion channel, Member member, SlashCommandInteractionEvent event, boolean silent) {
+        boolean allow = Objects.equals(channel.getId(), getBot().getConfig().getCmdChannelId());
+        if (!allow && !silent) {
+            replyPrivate(event, "Command is only allowed in command channel");
+        }
+        return allow;
     }
 
     @Override
