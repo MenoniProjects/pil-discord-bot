@@ -30,7 +30,8 @@ public class DiscordBot extends AbstractDiscordBot<DiscordBotConfig> {
             GatewayIntent.GUILD_MEMBERS,
             GatewayIntent.GUILD_MESSAGES,
             GatewayIntent.MESSAGE_CONTENT,
-            GatewayIntent.GUILD_EXPRESSIONS
+            GatewayIntent.GUILD_EXPRESSIONS,
+            GatewayIntent.GUILD_MODERATION
     );
     private static final List<CacheFlag> ENABLED_CACHES = List.of(
             CacheFlag.EMOJI
