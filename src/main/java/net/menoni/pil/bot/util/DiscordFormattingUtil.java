@@ -2,8 +2,8 @@ package net.menoni.pil.bot.util;
 
 import net.dv8tion.jda.api.entities.IMentionable;
 import net.dv8tion.jda.api.entities.Member;
+import net.menoni.jda.commons.discord.emote.Emotable;
 import net.menoni.pil.bot.discord.emote.CustomEmote;
-import net.menoni.pil.bot.discord.emote.Emotable;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 
 import java.util.Set;

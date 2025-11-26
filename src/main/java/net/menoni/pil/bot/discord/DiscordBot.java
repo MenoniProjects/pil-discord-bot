@@ -11,7 +11,7 @@ import net.menoni.jda.commons.discord.AbstractDiscordBot;
 import net.menoni.pil.bot.jdbc.model.JdbcMember;
 import net.menoni.pil.bot.service.MemberService;
 import net.menoni.pil.bot.service.TeamService;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.context.ApplicationContext;
 
 import java.util.List;
 import java.util.Objects;
@@ -48,13 +48,13 @@ public class DiscordBot extends AbstractDiscordBot<DiscordBotConfig> {
 
     public DiscordBot(
             DiscordBotConfig config,
-            AutowireCapableBeanFactory autowireCapableBeanFactory,
+            ApplicationContext applicationContext,
             boolean test
     ) throws InterruptedException {
         super(
                 "pil-bot",
                 config,
-                autowireCapableBeanFactory,
+                applicationContext,
                 test,
                 PERMISSIONS,
                 INTENTS,
@@ -85,7 +85,7 @@ public class DiscordBot extends AbstractDiscordBot<DiscordBotConfig> {
         new Thread(() -> {
 	        try {
 		        Thread.sleep(1000L);
-                MemberService memberService = getAutowireCapableBeanFactory().getBean(MemberService.class);
+                MemberService memberService = getApplicationContext().getBean(MemberService.class);
                 this.withGuild(g -> g.loadMembers().onSuccess(members -> {
                     Role playerRole = getPlayerRole();
                     Role teamLeadRole = getTeamLeadRole();
@@ -112,7 +112,7 @@ public class DiscordBot extends AbstractDiscordBot<DiscordBotConfig> {
     }
 
     public void ensurePlayerRole(Member discordMember, JdbcMember botMember, Role playerRole, Role teamLeadRole) {
-        getAutowireCapableBeanFactory().getBean(TeamService.class).ensurePlayerRoles(discordMember, botMember, playerRole, teamLeadRole);
+        getApplicationContext().getBean(TeamService.class).ensurePlayerRoles(discordMember, botMember, playerRole, teamLeadRole);
     }
 
     public void logAdminChannel(String text, Object... args) {

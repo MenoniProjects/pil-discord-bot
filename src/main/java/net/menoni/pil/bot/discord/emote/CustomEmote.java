@@ -1,6 +1,7 @@
 package net.menoni.pil.bot.discord.emote;
 
 import lombok.Getter;
+import net.menoni.jda.commons.discord.emote.Emotable;
 
 /**
  * To get an emote ID send:
