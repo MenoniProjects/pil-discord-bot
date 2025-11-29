@@ -8,6 +8,7 @@ import net.menoni.pil.bot.discord.command.impl.FeedbackCommandHandler;
 import net.menoni.pil.bot.discord.command.impl.ParseMatchDumpCommandHandler;
 import net.menoni.pil.bot.discord.command.impl.WinCommandHandler;
 import net.menoni.pil.bot.discord.command.chat.HelpCommand;
+import net.menoni.pil.bot.script.ScriptExecutor;
 import net.menoni.ws.discord.command.impl.LinkCommand;
 import net.menoni.ws.discord.command.impl.TmNickCommand;
 import net.menoni.ws.discord.command.impl.WouterCommand;
@@ -23,13 +24,17 @@ import java.util.Set;
 @Component
 public class DiscordBotProvider {
 
-    @Autowired
-    private DiscordBotConfig config;
+    @Autowired private DiscordBotConfig config;
+    @Autowired private ScriptExecutor scriptExecutor;
 
     @Bean
     @ConditionalOnProperty(value = "jda.bot.startup-test", havingValue = "false")
     public DiscordBot discordBot(ApplicationContext applicationContext) throws InterruptedException {
-        return new DiscordBot(this.config, applicationContext, false);
+        boolean testMode = false;
+        if (scriptExecutor.getScript() != null) {
+            testMode = true;
+        }
+        return new DiscordBot(this.config, applicationContext, testMode);
     }
 
     @Bean

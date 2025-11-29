@@ -1,6 +1,5 @@
 package net.menoni.pil.bot.jdbc.repository;
 
-import net.menoni.pil.bot.jdbc.model.JdbcFeedbackCategory;
 import net.menoni.pil.bot.jdbc.model.JdbcFeedbackChannel;
 import net.menoni.spring.commons.jdbc.AbstractTypeRepository;
 import net.menoni.spring.commons.util.NullableMap;

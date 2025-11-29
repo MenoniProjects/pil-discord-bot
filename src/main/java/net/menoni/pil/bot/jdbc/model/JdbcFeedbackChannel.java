@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Arrays;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -15,5 +17,9 @@ public class JdbcFeedbackChannel {
 	private String mapperUserId;
 	private String mapperChannelId;
 	private String feedbackChannelId;
+
+	public boolean hasMapper(String mapperId) {
+		return Arrays.asList(this.mapperUserId.split(",")).contains(mapperId);
+	}
 
 }

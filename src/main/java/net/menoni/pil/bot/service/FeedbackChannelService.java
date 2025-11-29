@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Role;
@@ -12,6 +13,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
+import net.dv8tion.jda.api.requests.restaction.ChannelAction;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.FileUpload;
 import net.menoni.jda.commons.util.JDAUtil;
@@ -29,10 +31,14 @@ import org.springframework.stereotype.Service;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class FeedbackChannelService implements EventListener {
+
+	private static final String PINNED_MESSAGE_SOURCE_CHANNEL_ID = "1438244685725569159";
+	private static final String PINNED_MESSAGE_SOURCE_MESSAGE_ID = "1443712114861801502";
 
 	@Autowired
 	private DiscordBot bot;
@@ -60,7 +66,7 @@ public class FeedbackChannelService implements EventListener {
 		return this.feedbackCategoryRepository.findAll();
 	}
 
-	public FeedbackChannelCreationResult createMapChannels(JdbcFeedbackCategory category, Member mapper) {
+	public FeedbackChannelCreationResult createMapChannels(JdbcFeedbackCategory category, List<Member> mappers) {
 		Guild g = bot.getGuild(bot.getGuildId());
 		Category mapperCategory = g.getCategoryById(category.getMapperCategoryId());
 		Category feedbackCategory = g.getCategoryById(category.getFeedbackCategoryId());
@@ -75,17 +81,38 @@ public class FeedbackChannelService implements EventListener {
 		if (feedbackRole == null) {
 			return FeedbackChannelCreationResult.failure("Feedback role not found");
 		}
+		if (mappers.isEmpty()) {
+			return FeedbackChannelCreationResult.failure("Should at least contain 1 mapper");
+		}
 
-		JdbcFeedbackChannel feedbackChannelData = this.feedbackChannelRepository.create(mapper.getId());
+		TextChannel pinnedMessageSourceChannel = g.getTextChannelById(PINNED_MESSAGE_SOURCE_CHANNEL_ID);
+		if (pinnedMessageSourceChannel == null) {
+			return FeedbackChannelCreationResult.failure("Pinned message source channel not found");
+		}
+		Message pinnedMessageSource = JDAUtil.queueAndWait(pinnedMessageSourceChannel.retrieveMessageById(PINNED_MESSAGE_SOURCE_MESSAGE_ID));
+		if (pinnedMessageSource == null) {
+			return FeedbackChannelCreationResult.failure("Pinned message not found");
+		}
 
-		TextChannel mapperChannel = JDAUtil.queueAndWait(mapperCategory.createTextChannel("%s-%s-%d".formatted(
+		String mappersId = mappers.stream().map(ISnowflake::getId).collect(Collectors.joining(","));
+		JdbcFeedbackChannel feedbackChannelData = this.feedbackChannelRepository.create(mappersId);
+
+		Member firstMapper = mappers.get(0);
+
+		ChannelAction<TextChannel> mapperChannelCreateAction = mapperCategory.createTextChannel("%s-%s-%d".formatted(
 						category.getKey(),
-						mapper.getEffectiveName(),
+						firstMapper.getEffectiveName(),
 						feedbackChannelData.getId()
 				))
 				.addRolePermissionOverride(g.getIdLong(), null, List.of(Permission.VIEW_CHANNEL)) // not public
-				.addPermissionOverride(g.getSelfMember(), List.of(Permission.VIEW_CHANNEL), List.of()) // add bot
-				.addMemberPermissionOverride(mapper.getIdLong(), List.of(Permission.VIEW_CHANNEL), List.of())); // add mapper
+				.addPermissionOverride(g.getSelfMember(), List.of(Permission.VIEW_CHANNEL), List.of()); // add bot
+
+		// add mappers
+		for (Member mapper : mappers) {
+			mapperChannelCreateAction = mapperChannelCreateAction.addMemberPermissionOverride(mapper.getIdLong(), List.of(Permission.VIEW_CHANNEL), List.of());
+		}
+
+		TextChannel mapperChannel = JDAUtil.queueAndWait(mapperChannelCreateAction); // add mapper
 
 		TextChannel feedbackChannel = JDAUtil.queueAndWait(feedbackCategory.createTextChannel("map-%d".formatted(
 						feedbackChannelData.getId()
@@ -97,6 +124,14 @@ public class FeedbackChannelService implements EventListener {
 		feedbackChannelData.setMapperChannelId(mapperChannel.getId());
 		feedbackChannelData.setFeedbackChannelId(feedbackChannel.getId());
 		this.feedbackChannelRepository.updateChannels(feedbackChannelData);
+
+		new Thread(() -> {
+			Message pinnedMessage1 = JDAUtil.queueAndWait(pinnedMessageSource.forwardTo(mapperChannel));
+			Message pinnedMessage2 = JDAUtil.queueAndWait(pinnedMessageSource.forwardTo(feedbackChannel));
+
+			JDAUtil.queueAndWait(pinnedMessage1.pin());
+			JDAUtil.queueAndWait(pinnedMessage2.pin());
+		}).start();
 
 		return FeedbackChannelCreationResult.success(mapperChannel, feedbackChannel);
 	}
@@ -126,7 +161,7 @@ public class FeedbackChannelService implements EventListener {
 		String forwardName = "[unknown]";
 
 		Role adminRole = bot.getRoleById(bot.getConfig().getAdminRoleId());
-		if (feedbackChannelData.getMapperUserId().equals(event.getMember().getId())) {
+		if (feedbackChannelData.hasMapper(event.getMember().getId())) {
 			forwardName = "Mapper";
 		} else if (event.getMember().getRoles().contains(adminRole)) {
 			forwardName = event.getMember().getAsMention();
@@ -147,7 +182,7 @@ public class FeedbackChannelService implements EventListener {
 		Role adminRole = bot.getRoleById(bot.getConfig().getAdminRoleId());
 		if (event.getMember().getRoles().contains(adminRole)) {
 			forwardName = event.getMember().getAsMention();
-		} else if (feedbackChannelData.getMapperUserId().equals(event.getMember().getId())) {
+		} else {
 			int num = this.feedbackChannelMemberRepository.getFeedbackUserNumber(feedbackChannelData.getId(), event.getMember().getId());
 			forwardName = "Tester-%d".formatted(num);
 		}
