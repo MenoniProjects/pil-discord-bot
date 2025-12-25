@@ -203,15 +203,23 @@ public class FeedbackChannelService implements EventListener {
 		if (source.getAttachments() != null && !source.getAttachments().isEmpty()) {
 			List<Message.Attachment> resAttachments = new ArrayList<>();
 			boolean hasMapFiles = false;
+			boolean hasOtherGbxFiles = false;
 			for (Message.Attachment attachment : source.getAttachments()) {
 				if (attachment.getFileName().endsWith(".Map.Gbx")) {
 					hasMapFiles = true;
+					continue;
+				}
+				if (attachment.getFileName().endsWith(".Gbx")) {
+					hasOtherGbxFiles = true;
 					continue;
 				}
 				resAttachments.add(attachment);
 			}
 			if (hasMapFiles) {
 				action = action.setContent(action.getContent() + "\n-# contains map file upload");
+			}
+			if (hasOtherGbxFiles) {
+				action = action.setContent(action.getContent() + "\n-# contains other gbx file upload");
 			}
 			if (!resAttachments.isEmpty()) {
 				List<FileUpload> fileUploads = new ArrayList<>();
