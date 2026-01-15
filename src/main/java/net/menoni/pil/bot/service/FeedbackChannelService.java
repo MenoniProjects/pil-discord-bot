@@ -39,6 +39,8 @@ public class FeedbackChannelService implements EventListener {
 
 	private static final String PINNED_MESSAGE_SOURCE_CHANNEL_ID = "1438244685725569159";
 	private static final String PINNED_MESSAGE_SOURCE_MESSAGE_ID = "1443712114861801502";
+	private static final int FILE_SIZE_LIMIT_MB = 10;
+	private static final int FILE_SIZE_LIMIT = 1024 * 1024 * FILE_SIZE_LIMIT_MB;
 
 	@Autowired
 	private DiscordBot bot;
@@ -223,13 +225,22 @@ public class FeedbackChannelService implements EventListener {
 			}
 			if (!resAttachments.isEmpty()) {
 				List<FileUpload> fileUploads = new ArrayList<>();
+				boolean fileOverLimit = false;
 				for (Message.Attachment attachment : resAttachments) {
+					if (attachment.getSize() >= FILE_SIZE_LIMIT) {
+						action = action.setContent(action.getContent() + "\n-# contains file >%d mb".formatted(FILE_SIZE_LIMIT_MB));
+						fileOverLimit = true;
+						continue;
+					}
 					try {
 						InputStream inputStream = attachment.getProxy().download().join();
 						fileUploads.add(FileUpload.fromData(inputStream, attachment.getFileName()));
 					} catch (Throwable t) {
 						log.error("Failed to download attachment for re-upload", t);
 					}
+				}
+				if (fileOverLimit) {
+					JDAUtil.queueAndWait(source.getChannel().sendMessage("-# Could not forward file over %dmb".formatted(FILE_SIZE_LIMIT_MB)));
 				}
 				action = action.addFiles(fileUploads);
 			}
