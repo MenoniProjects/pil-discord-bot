@@ -17,6 +17,7 @@ public class JdbcFeedbackChannel {
 	private String mapperUserId;
 	private String mapperChannelId;
 	private String feedbackChannelId;
+	private Boolean selected;
 
 	public boolean hasMapper(String mapperId) {
 		return Arrays.asList(this.mapperUserId.split(",")).contains(mapperId);

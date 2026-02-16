@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -45,7 +46,7 @@ public class SignupSheetService {
 		}
 	}
 
-//	@Scheduled(cron = "0 0 * * * *")
+	@Scheduled(cron = "0 0 * * * *")
 	public void signupSheetImportScheduling() {
 		if (FeatureFlags.DISABLE_REGISTRATION) {
 			return;

@@ -3,15 +3,10 @@ package net.menoni.pil.bot.discord;
 import net.menoni.jda.commons.discord.chatcommand.ChatCommandListener;
 import net.menoni.jda.commons.discord.command.DiscordBotCommandHandler;
 import net.menoni.jda.commons.discord.command.impl.StandardChannelCommandHandler;
-import net.menoni.pil.bot.discord.command.impl.ImportSignupsCommandHandler;
-import net.menoni.pil.bot.discord.command.impl.FeedbackCommandHandler;
-import net.menoni.pil.bot.discord.command.impl.ParseMatchDumpCommandHandler;
-import net.menoni.pil.bot.discord.command.impl.WinCommandHandler;
-import net.menoni.pil.bot.discord.command.chat.HelpCommand;
+import net.menoni.pil.bot.discord.command.chat.*;
+import net.menoni.pil.bot.discord.command.impl.*;
 import net.menoni.pil.bot.script.ScriptExecutor;
-import net.menoni.ws.discord.command.impl.LinkCommand;
-import net.menoni.ws.discord.command.impl.TmNickCommand;
-import net.menoni.ws.discord.command.impl.WouterCommand;
+import net.menoni.ws.discord.command.impl.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
@@ -47,6 +42,7 @@ public class DiscordBotProvider {
     public DiscordBotCommandHandler<DiscordBot> discordBotCommandHandler(DiscordBot bot) {
         return new DiscordBotCommandHandler<>(bot, Set.of(
                 // standard commands
+		        new EmoteCommand<>(bot),
                 new LinkCommand<>(bot, null),
                 new StandardChannelCommandHandler<>(bot),
                 new TmNickCommand<>(bot, null),
@@ -68,16 +64,17 @@ public class DiscordBotProvider {
                 bot,
                 applicationContext,
                 List.of(
-//            			new EndRoundCommand(),
-//            			new EventsExportCommand(),
-//            			new ForceWinCommand(),
-                        new HelpCommand()//,
-//            			new MatchChannelCommand(),
-//            			new MatchCommand(),
-//            			new MissingPlayersCommand(),
-//            			new RefreshTeamsCommand(),
-//            			new TeamCommand(),
-//            			new WinCommand()
+						new DebugCommand(),
+            			new EndRoundCommand(),
+            			new EventsExportCommand(),
+            			new ForceWinCommand(),
+                        new HelpCommand(),
+            			new MatchChannelCommand(),
+            			new MatchCommand(),
+            			new MissingPlayersCommand(),
+            			new RefreshTeamsCommand(),
+            			new TeamCommand(),
+            			new WinCommand()
                 )
         );
     }

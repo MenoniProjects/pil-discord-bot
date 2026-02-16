@@ -69,10 +69,14 @@ public class DiscordArgUtil {
 				int score2 = Integer.parseInt(scoreParts[1]);
 
 				if (score1 != score2 &&
-						isWithinScoreBounds(score1, 0, 2) &&
-						isWithinScoreBounds(score2, 0, 2)) {
+						isWithinScoreBounds(score1, 0, 3) &&
+						isWithinScoreBounds(score2, 0, 3)) {
 					int high = Math.max(score1, score2);
 					int low = Math.min(score1, score2);
+
+					if (high + low != 3) {
+						return null;
+					}
 
 					return new ParsedMatchScore(high, low);
 				}

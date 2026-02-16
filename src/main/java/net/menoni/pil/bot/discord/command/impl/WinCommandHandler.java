@@ -113,7 +113,10 @@ public class WinCommandHandler extends CommandHandler<DiscordBot> {
 				parsedMatchScore.print()
 		));
 
-		botLogsService.reportMatchWin(member, match.getDivision(), match.getRoundNumber(), winTeam, loseTeam, parsedMatchScore);
+		JdbcTeam team1 = teamService.getTeamById(match.getFirstTeamId());
+		JdbcTeam team2 = teamService.getTeamById(match.getSecondTeamId());
+
+		botLogsService.reportMatchWin(member, match.getDivision(), match.getRoundNumber(), team1, team2, winTeam, parsedMatchScore);
 		matchChannelService.onMatchMarkWin(member, match, parsedMatchScore);
 	}
 
@@ -121,7 +124,7 @@ public class WinCommandHandler extends CommandHandler<DiscordBot> {
 	public List<String> autoCompleteOption(Guild guild, MessageChannelUnion channel, Member member, CommandAutoCompleteInteractionEvent event, AutoCompleteQuery focussedOption) {
 		if (focussedOption.getName().equals("score")) {
 			return List.of(
-					"2-0",
+					"3-0",
 					"2-1",
 					"ff"
 			);

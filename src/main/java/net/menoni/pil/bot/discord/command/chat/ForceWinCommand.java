@@ -124,7 +124,10 @@ public class ForceWinCommand implements ChatCommand {
 		}
 		matchService.updateMatch(match);
 
-		applicationContext.getBean(BotLogsService.class).reportMatchForceWin(member, divNumber, roundNumber, winTeam, loseTeam, parsedMatchScore);
+		JdbcTeam team1 = teamService.getTeamById(match.getFirstTeamId());
+		JdbcTeam team2 = teamService.getTeamById(match.getSecondTeamId());
+
+		applicationContext.getBean(BotLogsService.class).reportMatchForceWin(member, divNumber, roundNumber, team1, team2, winTeam, parsedMatchScore);
 		applicationContext.getBean(MatchChannelService.class).onMatchMarkWin(member, match, parsedMatchScore);
 
 		reply(channel, alias, "Marked match (div: %d, round: %d, vs: %s) as won by %s with result: %s".formatted(

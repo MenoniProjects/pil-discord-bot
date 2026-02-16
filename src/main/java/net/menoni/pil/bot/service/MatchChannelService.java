@@ -310,13 +310,16 @@ public class MatchChannelService extends ListenerAdapter {
 		JdbcTeam winTeam = teamService.getTeamById(winTeamSignup.getTeamId());
 		JdbcTeam loseTeam = teamService.getTeamById(Objects.equals(winTeamSignup.getTeamId(), match.getFirstTeamId()) ? match.getSecondTeamId() : match.getFirstTeamId());
 
+		JdbcTeam team1 = teamService.getTeamById(match.getFirstTeamId());
+		JdbcTeam team2 = teamService.getTeamById(match.getSecondTeamId());
+
 		event.reply("<@%s> marked match as won by %s with result: %s".formatted(
 				event.getUser().getId(),
 				DiscordFormattingUtil.roleAsString(winTeam.getDiscordRoleId()),
 				parsedMatchScore.print()
 		)).setEphemeral(false).queue();
 
-		botLogsService.reportMatchWin(event.getMember(), match.getDivision(), match.getRoundNumber(), winTeam, loseTeam, parsedMatchScore);
+		botLogsService.reportMatchWin(event.getMember(), match.getDivision(), match.getRoundNumber(), team1, team2, winTeam, parsedMatchScore);
 	}
 
 	private StringSelectMenu factorScoreSelectMenu() {
@@ -324,7 +327,7 @@ public class MatchChannelService extends ListenerAdapter {
 				.setMinValues(1)
 				.setMaxValues(1)
 				.setDisabled(false)
-				.addOption("2-0", "2-0")
+				.addOption("3-0", "3-0")
 				.addOption("2-1", "2-1")
 				.addOption("forfeit", "ff")
 				.build();

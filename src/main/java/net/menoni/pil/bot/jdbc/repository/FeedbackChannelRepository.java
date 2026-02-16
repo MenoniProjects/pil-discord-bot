@@ -6,6 +6,7 @@ import net.menoni.spring.commons.util.NullableMap;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Map;
 
 @Repository
@@ -20,7 +21,8 @@ public class FeedbackChannelRepository extends AbstractTypeRepository<JdbcFeedba
 				keyHolder.getKey().longValue(),
 				mapperId,
 				null,
-				null
+				null,
+				false
 		);
 	}
 
@@ -36,8 +38,14 @@ public class FeedbackChannelRepository extends AbstractTypeRepository<JdbcFeedba
 
 	public JdbcFeedbackChannel findByChannel(String channelId) {
 		return this.queryOne(
-				"SELECT id, mapper_user_id, mapper_channel_id, feedback_channel_id FROM feedback_channel WHERE mapper_channel_id = ? OR feedback_channel_id = ?",
+				"SELECT id, mapper_user_id, mapper_channel_id, feedback_channel_id, selected FROM feedback_channel WHERE mapper_channel_id = ? OR feedback_channel_id = ?",
 				channelId, channelId
+		);
+	}
+
+	public List<JdbcFeedbackChannel> findAll() {
+		return this.queryMany(
+				"SELECT id, mapper_user_id, mapper_channel_id, feedback_channel_id, selected FROM feedback_channel"
 		);
 	}
 

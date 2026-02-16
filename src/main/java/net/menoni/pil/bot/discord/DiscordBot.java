@@ -34,7 +34,8 @@ public class DiscordBot extends AbstractDiscordBot<DiscordBotConfig> {
             GatewayIntent.GUILD_MODERATION
     );
     private static final List<CacheFlag> ENABLED_CACHES = List.of(
-            CacheFlag.EMOJI
+            CacheFlag.EMOJI,
+		    CacheFlag.MEMBER_OVERRIDES
     );
     private static final List<CacheFlag> DISABLED_CACHES = List.of(
             CacheFlag.VOICE_STATE,

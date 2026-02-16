@@ -4,10 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.menoni.commons.util.TMUtils;
+import net.menoni.jda.commons.util.DiscordRoleUtil;
 import net.menoni.jda.commons.util.JDAUtil;
 import net.menoni.pil.bot.config.FeatureFlags;
 import net.menoni.pil.bot.discord.DiscordBot;
@@ -18,13 +20,23 @@ import net.menoni.pil.bot.jdbc.repository.TeamRepository;
 import net.menoni.pil.bot.jdbc.repository.TeamSignupRepository;
 import net.menoni.pil.bot.util.DiscordArgUtil;
 import net.menoni.pil.bot.util.DiscordFormattingUtil;
-import net.menoni.pil.bot.util.DiscordRoleUtil;
 import net.menoni.pil.bot.util.Scheduling;
+import net.menoni.ws.client.MenoniWsClient;
+import net.menoni.ws.common.model.discord.WsDiscordUserLinks;
+import net.menoni.ws.discord.service.TmNameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -44,6 +56,10 @@ public class TeamService {
 	private TeamSignupRepository teamSignupRepository;
 	@Autowired
 	private SystemMessageService systemMessageService;
+	@Autowired
+	private TmNameService tmNameService;
+	@Autowired
+	private MenoniWsClient ws;
 
 	private ScheduledFuture<?> updateTeamsMessageTask;
 
@@ -163,14 +179,14 @@ public class TeamService {
 		for (int i = 0; i < messages.size(); i++) {
 			List<String> messageLines = messages.get(i);
 			systemMessageService.setIndexableSystemMessage(
-					"teams",
-					i+1,
+					"teams_s3",
+					i + 1,
 					teamsChannel.getId(),
 					m -> m.editMessage(String.join("\n", messageLines)),
 					t -> t.sendMessage(String.join("\n", messageLines))
 			);
 		}
-		systemMessageService.deleteFurtherIndexedMessages("teams", messages.size()+1);
+		systemMessageService.deleteFurtherIndexedMessages("teams", messages.size() + 1);
 	}
 
 	private void printTeam(List<String> messageLines, JdbcTeam team, List<JdbcTeamSignup> allSignups) {
@@ -222,8 +238,7 @@ public class TeamService {
 					continue;
 				}
 
-				List<Role> rolesToAdd = new ArrayList<>();
-				List<Role> rolesToRemove = new ArrayList<>();
+				DiscordRoleUtil.RoleUpdateAction updater = DiscordRoleUtil.updater(member);
 
 				JdbcTeamSignup signup = allSignups.stream()
 						.filter(Objects::nonNull)
@@ -239,26 +254,18 @@ public class TeamService {
 						update = true;
 					}
 					if (!hidden) {
-						if (!DiscordRoleUtil.hasRole(member, playerRole)) {
-							rolesToAdd.add(playerRole);
-						}
-						if (signup.isTeamLead() && !DiscordRoleUtil.hasRole(member, teamLeadRole)) {
-							rolesToAdd.add(teamLeadRole);
-						}
+						updater.conditional(playerRole, true);
+						updater.conditional(teamLeadRole, signup.isTeamLead());
 					}
 
 					allTeams.stream().filter(t -> Objects.equals(t.getId(), signup.getTeamId())).findAny().ifPresent((playerTeam) -> {
 						if (playerTeam.getDivision() == null) {
 							// no team division so remove any of the roles
 							for (Role teamMemberDivRole : teamMemberDivRoles) {
-								if (DiscordRoleUtil.hasRole(member, teamMemberDivRole)) {
-									rolesToRemove.add(teamMemberDivRole);
-								}
+								updater.conditional(teamMemberDivRole, false);
 							}
 							for (Role teamCaptainDivRole : teamCaptainDivRoles) {
-								if (DiscordRoleUtil.hasRole(member, teamCaptainDivRole)) {
-									rolesToRemove.add(teamCaptainDivRole);
-								}
+								updater.conditional(teamCaptainDivRole, false);
 							}
 						} else {
 							// make set of any roles the user should not have, start with all roles
@@ -271,9 +278,7 @@ public class TeamService {
 								possibleRemoveRoles.remove(teamDivMemberRole);
 
 								// ensure player has team-div-n role
-								if (!DiscordRoleUtil.hasRole(member, teamDivMemberRole)) {
-									rolesToAdd.add(teamDivMemberRole);
-								}
+								updater.conditional(teamDivMemberRole, true);
 							}
 
 							// find captain role they may need to have if they are captain, and do the same
@@ -282,17 +287,13 @@ public class TeamService {
 								if (teamDivCaptainRole != null) {
 									possibleRemoveRoles.remove(teamDivCaptainRole);
 
-									if (!DiscordRoleUtil.hasRole(member, teamDivCaptainRole)) {
-										rolesToAdd.add(teamDivCaptainRole);
-									}
+									updater.conditional(teamDivCaptainRole, true);
 								}
 							}
 
 							// check any of the other div-member/div-captain roles they should not have
 							for (Role possibleRemoveRole : possibleRemoveRoles) {
-								if (DiscordRoleUtil.hasRole(member, possibleRemoveRole)) {
-									rolesToRemove.add(possibleRemoveRole);
-								}
+								updater.conditional(possibleRemoveRole, false);
 							}
 						}
 					});
@@ -301,21 +302,13 @@ public class TeamService {
 						jdbcMember.setTeamId(null);
 						update = true;
 					}
-					if (DiscordRoleUtil.hasRole(member, playerRole)) {
-						rolesToRemove.add(playerRole);
-					}
-					if (DiscordRoleUtil.hasRole(member, teamLeadRole)) {
-						rolesToRemove.add(teamLeadRole);
-					}
+					updater.conditional(playerRole, false);
+					updater.conditional(teamLeadRole, false);
 					for (Role teamMemberDivRole : teamMemberDivRoles) {
-						if (DiscordRoleUtil.hasRole(member, teamMemberDivRole)) {
-							rolesToRemove.add(teamMemberDivRole);
-						}
+						updater.conditional(teamMemberDivRole, false);
 					}
 					for (Role teamCaptainDivRole : teamCaptainDivRoles) {
-						if (DiscordRoleUtil.hasRole(member, teamCaptainDivRole)) {
-							rolesToRemove.add(teamCaptainDivRole);
-						}
+						updater.conditional(teamCaptainDivRole, false);
 					}
 				}
 
@@ -323,27 +316,39 @@ public class TeamService {
 					Role discordRole = teamRolesMapped.get(team.getDiscordRoleId());
 					if (Objects.equals(team.getId(), jdbcMember.getTeamId())) {
 						// player team
-						if (!DiscordRoleUtil.hasRole(member, discordRole)) {
-							rolesToAdd.add(discordRole);
-						}
+						updater.conditional(discordRole, true);
 					} else {
 						// not player team
-						if (DiscordRoleUtil.hasRole(member, discordRole)) {
-							rolesToRemove.add(discordRole);
-						}
+						updater.conditional(discordRole, false);
 					}
 				}
 
-				if (!rolesToAdd.isEmpty() || !rolesToRemove.isEmpty()) {
-					g.modifyMemberRoles(member, rolesToAdd, rolesToRemove).reason("CSV Signup Import").queue();
-				}
+				updater.modifyMemberRoles(r -> JDAUtil.queueAndWait(r.reason("CSV Signup Import")));
 
 				if (update) {
 					memberService.updateMember(jdbcMember);
-					try { Thread.sleep(1000); } catch (InterruptedException ignored) { }
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException ignored) {
+					}
 				}
 			}
 		}));
+	}
+
+	private void addIdToSetIfPresent(Set<BasicPlayer> set, String idVal, String nameVal) {
+		String v = nullifyBlank(idVal);
+		if (v == null) {
+			return;
+		}
+		try {
+			String uuid = factorTrackmaniaUuid(v);
+			set.add(new BasicPlayer(uuid, nameVal));
+		} catch (Exception e) {
+		}
+	}
+
+	private record BasicPlayer(String id, String name) {
 	}
 
 	public List<String> importCsv(List<String[]> lines) {
@@ -352,6 +357,18 @@ public class TeamService {
 			csvLines.add(parseLine(line));
 		}
 
+		Set<BasicPlayer> playerEntries = new HashSet<>();
+		for (SignupCSVLine csvLine : csvLines) {
+			addIdToSetIfPresent(playerEntries, csvLine.getMember1TrackmaniaUserLink(), csvLine.getMember1TrackmaniaName());
+			addIdToSetIfPresent(playerEntries, csvLine.getMember2TrackmaniaUserLink(), csvLine.getMember2TrackmaniaName());
+			addIdToSetIfPresent(playerEntries, csvLine.getMember3TrackmaniaUserLink(), csvLine.getMember3TrackmaniaName());
+			addIdToSetIfPresent(playerEntries, csvLine.getMember4TrackmaniaUserLink(), csvLine.getMember4TrackmaniaName());
+			addIdToSetIfPresent(playerEntries, csvLine.getMember5TrackmaniaUserLink(), csvLine.getMember5TrackmaniaName());
+			addIdToSetIfPresent(playerEntries, csvLine.getMember6TrackmaniaUserLink(), csvLine.getMember6TrackmaniaName());
+		}
+
+		Map<String, String> nicks = tmNameService.getNicksForAccountIds(playerEntries, BasicPlayer::id, BasicPlayer::name);
+
 		List<String> resultLines = new ArrayList<>();
 		for (SignupCSVLine line : csvLines) {
 			if (csvLines.stream().filter(l -> Objects.equals(l.getTeamName(), line.getTeamName())).count() > 1) {
@@ -359,7 +376,7 @@ public class TeamService {
 				List<SignupCSVLine> teamsWithSameName = csvLines.stream().filter(l -> Objects.equals(l.getTeamName(), line.getTeamName())).toList();
 				for (int i = 0; i < teamsWithSameName.size(); i++) {
 					SignupCSVLine renameTeam = teamsWithSameName.get(i);
-					renameTeam.setTeamName(renameTeam.getTeamName() + " (%d)".formatted(i+1));
+					renameTeam.setTeamName(renameTeam.getTeamName() + " (%d)".formatted(i + 1));
 				}
 			}
 		}
@@ -382,7 +399,7 @@ public class TeamService {
 
 				List<JdbcTeamSignup> signupsForTeam = new ArrayList<>(existingSignups.stream().filter(s -> Objects.equals(s.getTeamId(), teamId)).toList());
 
-				List<CSVSignupMember> csvSignupMembers = membersFromSignup(signupLine.getTeamName(), resultLines, signupLine);
+				List<CSVSignupMember> csvSignupMembers = membersFromSignup(nicks, signupLine.getTeamName(), resultLines, signupLine);
 
 				for (CSVSignupMember csvSignupMember : csvSignupMembers) {
 					JdbcTeamSignup existingSignup = signupsForTeam.stream().filter(s -> Objects.equals(s.getTrackmaniaUuid(), csvSignupMember.trackmaniaUuid())).findAny().orElse(null);
@@ -396,8 +413,8 @@ public class TeamService {
 						signupsForTeam.remove(existingSignup);
 
 						if (!existingSignup.getTrackmaniaName().equals(csvSignupMember.trackmaniaName()) ||
-							!existingSignup.getDiscordName().equals(csvSignupMember.discordName()) ||
-							existingSignup.isTeamLead() != csvSignupMember.first()) {
+								!existingSignup.getDiscordName().equals(csvSignupMember.discordName()) ||
+								existingSignup.isTeamLead() != csvSignupMember.first()) {
 							existingSignup.setDiscordName(csvSignupMember.discordName());
 							existingSignup.setTrackmaniaName(csvSignupMember.trackmaniaName());
 							existingSignup.setTeamLead(csvSignupMember.first());
@@ -414,7 +431,10 @@ public class TeamService {
 					}
 					resultLines.add("Added team **%s** with members %s\n\timage: %s".formatted(
 							teamForSignup.getName(),
-							csvSignupMembers.stream().map(CSVSignupMember::trackmaniaName).collect(Collectors.joining(", ")),
+							csvSignupMembers.stream()
+									.map(CSVSignupMember::trackmaniaName)
+									.map(DiscordFormattingUtil::escapeFormatting)
+									.collect(Collectors.joining(", ")),
 							image
 					));
 				}
@@ -463,21 +483,51 @@ public class TeamService {
 			new Thread(this::updateMemberRolesAfterCsvImport).start();
 		}
 
+		Guild guild = this.bot.getGuild(this.bot.getGuildId());
+		if (guild != null) {
+			log.info("Declaring user links");
+			List<WsDiscordUserLinks> linksForGuildMembers = new ArrayList<>();
+			try {
+				linksForGuildMembers.addAll(this.ws.getDiscordDomain().getUserService().getLinksForGuildMembers(this.bot.getGuildId()));
+			} catch (Exception e) {
+				log.warn("Failed to fetch guild member links", e);
+			}
+
+			guild.loadMembers().onSuccess(members -> {
+				for (JdbcTeamSignup signup : allSignups) {
+					Member member = members.stream().filter(m -> m.getUser().getName().equalsIgnoreCase(signup.getDiscordName())).findAny().orElse(null);
+					if (member != null) {
+						WsDiscordUserLinks existingLinks = linksForGuildMembers.stream().filter(link -> link.getDiscordId().equals(member.getId())).findAny().orElse(null);
+						if (existingLinks != null) {
+							if (existingLinks.getAccountIds().contains(signup.getTrackmaniaUuid())) {
+								continue;
+							}
+						}
+						try {
+							this.ws.getDiscordDomain().getLinkRequestService().requestPlayerLink(member.getId(), signup.getTrackmaniaUuid());
+						} catch (Exception e) {
+							log.warn("Failed to request player link", e);
+						}
+					}
+				}
+			});
+		}
+
 		return resultLines;
 	}
 
-	private static List<CSVSignupMember> membersFromSignup(String teamName, List<String> resultLines, SignupCSVLine line) throws Exception {
+	private static List<CSVSignupMember> membersFromSignup(Map<String, String> nicks, String teamName, List<String> resultLines, SignupCSVLine line) throws Exception {
 		List<CSVSignupMember> members = new ArrayList<>();
-		addSignupMember(1, teamName, resultLines, members, line.getMember1DiscordName(), line.getMember1TrackmaniaName(), line.getMember1TrackmaniaUserLink(), true);
-		addSignupMember(2, teamName, resultLines, members, line.getMember2DiscordName(), line.getMember2TrackmaniaName(), line.getMember2TrackmaniaUserLink(), false);
-		addSignupMember(3, teamName, resultLines, members, line.getMember3DiscordName(), line.getMember3TrackmaniaName(), line.getMember3TrackmaniaUserLink(), false);
-		addSignupMember(4, teamName, resultLines, members, line.getMember4DiscordName(), line.getMember4TrackmaniaName(), line.getMember4TrackmaniaUserLink(), false);
-		addSignupMember(5, teamName, resultLines, members, line.getMember5DiscordName(), line.getMember5TrackmaniaName(), line.getMember5TrackmaniaUserLink(), false);
-		addSignupMember(6, teamName, resultLines, members, line.getMember6DiscordName(), line.getMember6TrackmaniaName(), line.getMember6TrackmaniaUserLink(), false);
+		addSignupMember(1, nicks, teamName, resultLines, members, line.getMember1DiscordName(), line.getMember1TrackmaniaName(), line.getMember1TrackmaniaUserLink(), true);
+		addSignupMember(2, nicks, teamName, resultLines, members, line.getMember2DiscordName(), line.getMember2TrackmaniaName(), line.getMember2TrackmaniaUserLink(), false);
+		addSignupMember(3, nicks, teamName, resultLines, members, line.getMember3DiscordName(), line.getMember3TrackmaniaName(), line.getMember3TrackmaniaUserLink(), false);
+		addSignupMember(4, nicks, teamName, resultLines, members, line.getMember4DiscordName(), line.getMember4TrackmaniaName(), line.getMember4TrackmaniaUserLink(), false);
+		addSignupMember(5, nicks, teamName, resultLines, members, line.getMember5DiscordName(), line.getMember5TrackmaniaName(), line.getMember5TrackmaniaUserLink(), false);
+		addSignupMember(6, nicks, teamName, resultLines, members, line.getMember6DiscordName(), line.getMember6TrackmaniaName(), line.getMember6TrackmaniaUserLink(), false);
 		return members;
 	}
 
-	private static void addSignupMember(int number, String teamName, List<String> resultLines, List<CSVSignupMember> members, String discordName, String trackmaniaName, String trackmaniaUuid, boolean captain) throws Exception {
+	private static void addSignupMember(int number, Map<String, String> nicks, String teamName, List<String> resultLines, List<CSVSignupMember> members, String discordName, String trackmaniaName, String trackmaniaUuid, boolean captain) throws Exception {
 		discordName = nullifyBlank(discordName);
 		trackmaniaName = nullifyBlank(trackmaniaName);
 		trackmaniaUuid = nullifyBlank(trackmaniaUuid);
@@ -515,7 +565,12 @@ public class TeamService {
 			}
 			return;
 		}
-		members.add(new CSVSignupMember(discordName, trackmaniaName, factorTrackmaniaUuid(trackmaniaUuid), captain));
+		String tmId = factorTrackmaniaUuid(trackmaniaUuid);
+		String name = nicks.get(tmId);
+		if (name == null) {
+			name = trackmaniaName;
+		}
+		members.add(new CSVSignupMember(discordName, name, tmId, captain));
 	}
 
 	private static void markFieldStatus(List<String> provided, List<String> missing, String fieldValue, String fieldName) {
@@ -733,7 +788,8 @@ public class TeamService {
 			String trackmaniaName,
 			String trackmaniaUuid,
 			boolean first
-	) { }
+	) {
+	}
 
 	private SignupCSVLine parseLine(String[] line) {
 		return new SignupCSVLine(

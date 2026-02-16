@@ -105,7 +105,10 @@ public class WinCommand implements ChatCommand {
 				parsedMatchScore.print()
 		));
 
-		applicationContext.getBean(BotLogsService.class).reportMatchWin(member, match.getDivision(), match.getRoundNumber(), winTeam, loseTeam, parsedMatchScore);
+		JdbcTeam team1 = teamService.getTeamById(match.getFirstTeamId());
+		JdbcTeam team2 = teamService.getTeamById(match.getSecondTeamId());
+
+		applicationContext.getBean(BotLogsService.class).reportMatchWin(member, match.getDivision(), match.getRoundNumber(), team1, team2, winTeam, parsedMatchScore);
 		applicationContext.getBean(MatchChannelService.class).onMatchMarkWin(member, match, parsedMatchScore);
 		return true;
 	}

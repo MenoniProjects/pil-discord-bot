@@ -57,7 +57,7 @@ public class MatchService {
 
 	private String formatMatchScore(JdbcMatch match) {
 		if (match.getWinTeamScore() == 0 && match.getLoseTeamScore() == 0) {
-			return "2-0 / FF";
+			return "3-0 / FF";
 		}
 		return match.getWinTeamScore() + "-" + match.getLoseTeamScore();
 	}
@@ -108,7 +108,7 @@ public class MatchService {
 
 				int winscore = match.getWinTeamScore();
 				if (match.getWinTeamScore() == 0) {
-					winscore = 2;
+					winscore = 3;
 				}
 
 				lines.add(new Object[] {
@@ -117,7 +117,7 @@ public class MatchService {
 						Integer.toString(match.getDivision()),
 						teamWin.getName(),
 						teamLose.getName(),
-						Integer.toString(winscore),
+						Integer.toString(winscore) + 1,
 						Integer.toString(match.getLoseTeamScore()),
 						(match.getWinTeamScore() == 0 ? "FF" : ""),
 				});
