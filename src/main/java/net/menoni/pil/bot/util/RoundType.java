@@ -14,6 +14,10 @@ public enum RoundType {
 	GRAND_FINAL(20, "Grand Final", (division, roundNum, teamName1, teamName2) -> "d%d-gf-%s-%s".formatted(division, teamName1, teamName2)),
 	;
 
+
+
+	private static final Pattern INVALID_CHAR_PATTERN = Pattern.compile("[^0-9a-zA-Z-]");
+
 	private final int start;
 	private final String displayName;
 	private final MatchChannelNameFormatter formatter;
@@ -51,6 +55,8 @@ public enum RoundType {
 	public String matchChannelName(int division, int roundNum, String teamName1, String teamName2) {
 		teamName1 = teamName1.toLowerCase().replaceAll(Pattern.quote(" "), "-");
 		teamName2 = teamName2.toLowerCase().replaceAll(Pattern.quote(" "), "-");
+		teamName1 = teamName1.replaceAll(INVALID_CHAR_PATTERN.pattern(), "");
+		teamName2 = teamName2.replaceAll(INVALID_CHAR_PATTERN.pattern(), "");
 		roundNum = adjustRoundNumber(roundNum);
 
 		return this.getFormatter().format(division, roundNum, teamName1, teamName2);

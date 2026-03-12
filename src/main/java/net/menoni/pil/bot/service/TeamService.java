@@ -201,11 +201,19 @@ public class TeamService {
 		parts.add("_");
 		for (int i = 0; i < signups.size(); i++) {
 			JdbcTeamSignup signup = signups.get(i);
-			if (signup.isTeamLead()) {
-				parts.add("__%s__".formatted(DiscordFormattingUtil.escapeFormatting(signup.getTrackmaniaName())));
-			} else {
-				parts.add("%s".formatted(DiscordFormattingUtil.escapeFormatting(signup.getTrackmaniaName())));
+			if (signup.isHidden()) {
+				continue;
 			}
+			String s = "";
+			if (signup.isTeamLead()) {
+				s = "__%s__".formatted(DiscordFormattingUtil.escapeFormatting(signup.getTrackmaniaName()));
+			} else {
+				s = "%s".formatted(DiscordFormattingUtil.escapeFormatting(signup.getTrackmaniaName()));
+			}
+			if (signup.isArchived()) {
+				s = "~~%s~~".formatted(s);
+			}
+			parts.add(s);
 			if (i + 1 < signups.size()) {
 				parts.add(", ");
 			}
@@ -253,10 +261,10 @@ public class TeamService {
 						jdbcMember.setTeamId(signup.getTeamId());
 						update = true;
 					}
-					if (!hidden) {
+//					if (!hidden) {
 						updater.conditional(playerRole, true);
 						updater.conditional(teamLeadRole, signup.isTeamLead());
-					}
+//					}
 
 					allTeams.stream().filter(t -> Objects.equals(t.getId(), signup.getTeamId())).findAny().ifPresent((playerTeam) -> {
 						if (playerTeam.getDivision() == null) {
@@ -365,6 +373,13 @@ public class TeamService {
 			addIdToSetIfPresent(playerEntries, csvLine.getMember4TrackmaniaUserLink(), csvLine.getMember4TrackmaniaName());
 			addIdToSetIfPresent(playerEntries, csvLine.getMember5TrackmaniaUserLink(), csvLine.getMember5TrackmaniaName());
 			addIdToSetIfPresent(playerEntries, csvLine.getMember6TrackmaniaUserLink(), csvLine.getMember6TrackmaniaName());
+			// extra members
+			addIdToSetIfPresent(playerEntries, csvLine.getMember7TrackmaniaUserLink(), csvLine.getMember7TrackmaniaName());
+			addIdToSetIfPresent(playerEntries, csvLine.getMember8TrackmaniaUserLink(), csvLine.getMember8TrackmaniaName());
+			addIdToSetIfPresent(playerEntries, csvLine.getMember9TrackmaniaUserLink(), csvLine.getMember9TrackmaniaName());
+			addIdToSetIfPresent(playerEntries, csvLine.getMember10TrackmaniaUserLink(), csvLine.getMember10TrackmaniaName());
+			addIdToSetIfPresent(playerEntries, csvLine.getMember11TrackmaniaUserLink(), csvLine.getMember11TrackmaniaName());
+			addIdToSetIfPresent(playerEntries, csvLine.getMember12TrackmaniaUserLink(), csvLine.getMember12TrackmaniaName());
 		}
 
 		Map<String, String> nicks = tmNameService.getNicksForAccountIds(playerEntries, BasicPlayer::id, BasicPlayer::name);
@@ -404,20 +419,58 @@ public class TeamService {
 				for (CSVSignupMember csvSignupMember : csvSignupMembers) {
 					JdbcTeamSignup existingSignup = signupsForTeam.stream().filter(s -> Objects.equals(s.getTrackmaniaUuid(), csvSignupMember.trackmaniaUuid())).findAny().orElse(null);
 					if (existingSignup == null) {
-						existingSignup = new JdbcTeamSignup(null, teamId, csvSignupMember.discordName(), csvSignupMember.trackmaniaName(), csvSignupMember.trackmaniaUuid(), csvSignupMember.first(), false, false);
+						existingSignup = new JdbcTeamSignup(null, teamId, csvSignupMember.discordName(), csvSignupMember.trackmaniaName(), csvSignupMember.trackmaniaUuid(), csvSignupMember.captain(), false, !csvSignupMember.active());
 						this.teamSignupRepository.saveSignup(existingSignup);
 						if (!newTeam) {
-							resultLines.add("Added **%s** to team **%s**".formatted(csvSignupMember.trackmaniaName(), teamForSignup.getName()));
+							String extra = "";
+							if (csvSignupMember.extra()) {
+								if (csvSignupMember.captain()) {
+									extra = " (extra captain)";
+								} else {
+									extra = " (extra player)";
+								}
+							}
+							resultLines.add("Added%s **%s** to team **%s**".formatted(extra, csvSignupMember.trackmaniaName(), teamForSignup.getName()));
 						}
 					} else {
 						signupsForTeam.remove(existingSignup);
 
 						if (!existingSignup.getTrackmaniaName().equals(csvSignupMember.trackmaniaName()) ||
 								!existingSignup.getDiscordName().equals(csvSignupMember.discordName()) ||
-								existingSignup.isTeamLead() != csvSignupMember.first()) {
+								existingSignup.isTeamLead() != csvSignupMember.captain() ||
+								existingSignup.isArchived() == csvSignupMember.active()) {
+							if (!existingSignup.getDiscordName().equals(csvSignupMember.discordName())) {
+								resultLines.add("updating discord name from **%s** to **%s** in team **%s**".formatted(
+										existingSignup.getDiscordName(),
+										csvSignupMember.discordName(),
+										teamForSignup.getName()
+								));
+							}
+							if (!existingSignup.getTrackmaniaName().equals(csvSignupMember.trackmaniaName())) {
+								resultLines.add("updating TM name from **%s** to **%s** in team **%s**".formatted(
+										existingSignup.getTrackmaniaName(),
+										csvSignupMember.trackmaniaName(),
+										teamForSignup.getName()
+								));
+							}
 							existingSignup.setDiscordName(csvSignupMember.discordName());
 							existingSignup.setTrackmaniaName(csvSignupMember.trackmaniaName());
-							existingSignup.setTeamLead(csvSignupMember.first());
+							if (existingSignup.isTeamLead() != csvSignupMember.captain()) {
+								if (csvSignupMember.captain()) {
+									resultLines.add("set **%s** as captain for team **%s**".formatted(DiscordFormattingUtil.escapeFormatting(csvSignupMember.trackmaniaName()), teamForSignup.getName()));
+								} else {
+									resultLines.add("unset **%s** as captain for team **%s**".formatted(DiscordFormattingUtil.escapeFormatting(csvSignupMember.trackmaniaName()), teamForSignup.getName()));
+								}
+							}
+							if (existingSignup.isArchived() == csvSignupMember.active()) {
+								if (csvSignupMember.active()) {
+									resultLines.add("re-activated player **%s** for team **%s**".formatted(DiscordFormattingUtil.escapeFormatting(csvSignupMember.trackmaniaName()), teamForSignup.getName()));
+								} else {
+									resultLines.add("de-activated player **%s** for team **%s**".formatted(DiscordFormattingUtil.escapeFormatting(csvSignupMember.trackmaniaName()), teamForSignup.getName()));
+								}
+							}
+							existingSignup.setTeamLead(csvSignupMember.captain());
+							existingSignup.setArchived(!csvSignupMember.active());
 							this.teamSignupRepository.saveSignup(existingSignup);
 						}
 					}
@@ -469,10 +522,12 @@ public class TeamService {
 
 		// check every team having 3-6 sign-ups
 		List<JdbcTeam> allTeams = this.teamRepository.getAll();
-		for (JdbcTeam team : allTeams) {
-			long signupCount = allSignups.stream().filter(s -> Objects.equals(s.getTeamId(), team.getId())).count();
-			if (signupCount < 3 || signupCount > 6) {
-				resultLines.add("Team **%s** has %d sign-ups (expecting 3-6)".formatted(team.getName(), signupCount));
+		if (!FeatureFlags.DISABLE_TEAM_SIZE_ERROR) {
+			for (JdbcTeam team : allTeams) {
+				long signupCount = allSignups.stream().filter(s -> Objects.equals(s.getTeamId(), team.getId())).count();
+				if (signupCount < 3 || signupCount > 6) {
+					resultLines.add("Team **%s** has %d sign-ups (expecting 3-6)".formatted(team.getName(), signupCount));
+				}
 			}
 		}
 
@@ -495,6 +550,9 @@ public class TeamService {
 
 			guild.loadMembers().onSuccess(members -> {
 				for (JdbcTeamSignup signup : allSignups) {
+					if (signup.isHidden()) {
+						continue;
+					}
 					Member member = members.stream().filter(m -> m.getUser().getName().equalsIgnoreCase(signup.getDiscordName())).findAny().orElse(null);
 					if (member != null) {
 						WsDiscordUserLinks existingLinks = linksForGuildMembers.stream().filter(link -> link.getDiscordId().equals(member.getId())).findAny().orElse(null);
@@ -518,22 +576,29 @@ public class TeamService {
 
 	private static List<CSVSignupMember> membersFromSignup(Map<String, String> nicks, String teamName, List<String> resultLines, SignupCSVLine line) throws Exception {
 		List<CSVSignupMember> members = new ArrayList<>();
-		addSignupMember(1, nicks, teamName, resultLines, members, line.getMember1DiscordName(), line.getMember1TrackmaniaName(), line.getMember1TrackmaniaUserLink(), true);
-		addSignupMember(2, nicks, teamName, resultLines, members, line.getMember2DiscordName(), line.getMember2TrackmaniaName(), line.getMember2TrackmaniaUserLink(), false);
-		addSignupMember(3, nicks, teamName, resultLines, members, line.getMember3DiscordName(), line.getMember3TrackmaniaName(), line.getMember3TrackmaniaUserLink(), false);
-		addSignupMember(4, nicks, teamName, resultLines, members, line.getMember4DiscordName(), line.getMember4TrackmaniaName(), line.getMember4TrackmaniaUserLink(), false);
-		addSignupMember(5, nicks, teamName, resultLines, members, line.getMember5DiscordName(), line.getMember5TrackmaniaName(), line.getMember5TrackmaniaUserLink(), false);
-		addSignupMember(6, nicks, teamName, resultLines, members, line.getMember6DiscordName(), line.getMember6TrackmaniaName(), line.getMember6TrackmaniaUserLink(), false);
+		addSignupMember(1, nicks, teamName, resultLines, members, line.getMember1DiscordName(), line.getMember1TrackmaniaName(), line.getMember1TrackmaniaUserLink(), line.isActive1(), true);
+		addSignupMember(2, nicks, teamName, resultLines, members, line.getMember2DiscordName(), line.getMember2TrackmaniaName(), line.getMember2TrackmaniaUserLink(), line.isActive2(), false);
+		addSignupMember(3, nicks, teamName, resultLines, members, line.getMember3DiscordName(), line.getMember3TrackmaniaName(), line.getMember3TrackmaniaUserLink(), line.isActive3(), false);
+		addSignupMember(4, nicks, teamName, resultLines, members, line.getMember4DiscordName(), line.getMember4TrackmaniaName(), line.getMember4TrackmaniaUserLink(), line.isActive4(), false);
+		addSignupMember(5, nicks, teamName, resultLines, members, line.getMember5DiscordName(), line.getMember5TrackmaniaName(), line.getMember5TrackmaniaUserLink(), line.isActive5(), false);
+		addSignupMember(6, nicks, teamName, resultLines, members, line.getMember6DiscordName(), line.getMember6TrackmaniaName(), line.getMember6TrackmaniaUserLink(), line.isActive6(), false);
+		// extra
+		addSignupMember(7, nicks, teamName, resultLines, members, line.getMember7DiscordName(), line.getMember7TrackmaniaName(), line.getMember7TrackmaniaUserLink(), true, true);
+		addSignupMember(8, nicks, teamName, resultLines, members, line.getMember8DiscordName(), line.getMember8TrackmaniaName(), line.getMember8TrackmaniaUserLink(), true, false);
+		addSignupMember(9, nicks, teamName, resultLines, members, line.getMember9DiscordName(), line.getMember9TrackmaniaName(), line.getMember9TrackmaniaUserLink(), true, false);
+		addSignupMember(10, nicks, teamName, resultLines, members, line.getMember10DiscordName(), line.getMember10TrackmaniaName(), line.getMember10TrackmaniaUserLink(), true, false);
+		addSignupMember(11, nicks, teamName, resultLines, members, line.getMember11DiscordName(), line.getMember11TrackmaniaName(), line.getMember11TrackmaniaUserLink(), true, false);
+		addSignupMember(12, nicks, teamName, resultLines, members, line.getMember12DiscordName(), line.getMember12TrackmaniaName(), line.getMember12TrackmaniaUserLink(), true, false);
 		return members;
 	}
 
-	private static void addSignupMember(int number, Map<String, String> nicks, String teamName, List<String> resultLines, List<CSVSignupMember> members, String discordName, String trackmaniaName, String trackmaniaUuid, boolean captain) throws Exception {
+	private static void addSignupMember(int number, Map<String, String> nicks, String teamName, List<String> resultLines, List<CSVSignupMember> members, String discordName, String trackmaniaName, String trackmaniaUuid, boolean active, boolean captain) throws Exception {
 		discordName = nullifyBlank(discordName);
 		trackmaniaName = nullifyBlank(trackmaniaName);
 		trackmaniaUuid = nullifyBlank(trackmaniaUuid);
 		if (discordName == null || trackmaniaName == null || trackmaniaUuid == null) {
 			// incomplete captain
-			if (captain) {
+			if (captain && number <= 6) {
 				List<String> missingFieldNames = new ArrayList<>();
 				if (discordName == null) {
 					missingFieldNames.add("discord-name");
@@ -570,7 +635,7 @@ public class TeamService {
 		if (name == null) {
 			name = trackmaniaName;
 		}
-		members.add(new CSVSignupMember(discordName, name, tmId, captain));
+		members.add(new CSVSignupMember(discordName, name, tmId, captain, active, number > 6));
 	}
 
 	private static void markFieldStatus(List<String> provided, List<String> missing, String fieldValue, String fieldName) {
@@ -787,7 +852,9 @@ public class TeamService {
 			String discordName,
 			String trackmaniaName,
 			String trackmaniaUuid,
-			boolean first
+			boolean captain,
+			boolean active,
+			boolean extra
 	) {
 	}
 
@@ -814,7 +881,33 @@ public class TeamService {
 				line[18].trim(),
 				line[19].trim(),
 				line[20].trim(),
-				line[21].trim()
+				line[21].trim(),
+				// active
+				line[22].trim(),
+				line[23].trim(),
+				line[24].trim(),
+				line[25].trim(),
+				line[26].trim(),
+				line[27].trim(),
+				// extra
+				line[28].trim(),
+				line[29].trim(),
+				line[30].trim(),
+				line[31].trim(),
+				line[32].trim(),
+				line[33].trim(),
+				line[34].trim(),
+				line[35].trim(),
+				line[36].trim(),
+				line[37].trim(),
+				line[38].trim(),
+				line[39].trim(),
+				line[40].trim(),
+				line[41].trim(),
+				line[42].trim(),
+				line[43].trim(),
+				line[44].trim(),
+				line[45].trim()
 		);
 	}
 
@@ -843,6 +936,56 @@ public class TeamService {
 		private String member6DiscordName;
 		private String member6TrackmaniaName;
 		private String member6TrackmaniaUserLink;
+		// checkmarks
+		private String active1;
+		private String active2;
+		private String active3;
+		private String active4;
+		private String active5;
+		private String active6;
+		// extra
+		private String member7DiscordName;
+		private String member7TrackmaniaName;
+		private String member7TrackmaniaUserLink;
+		private String member8DiscordName;
+		private String member8TrackmaniaName;
+		private String member8TrackmaniaUserLink;
+		private String member9DiscordName;
+		private String member9TrackmaniaName;
+		private String member9TrackmaniaUserLink;
+		private String member10DiscordName;
+		private String member10TrackmaniaName;
+		private String member10TrackmaniaUserLink;
+		private String member11DiscordName;
+		private String member11TrackmaniaName;
+		private String member11TrackmaniaUserLink;
+		private String member12DiscordName;
+		private String member12TrackmaniaName;
+		private String member12TrackmaniaUserLink;
+
+		public boolean isActive1() {
+			return Boolean.parseBoolean(active1);
+		}
+
+		public boolean isActive2() {
+			return Boolean.parseBoolean(active2);
+		}
+
+		public boolean isActive3() {
+			return Boolean.parseBoolean(active3);
+		}
+
+		public boolean isActive4() {
+			return Boolean.parseBoolean(active4);
+		}
+
+		public boolean isActive5() {
+			return Boolean.parseBoolean(active5);
+		}
+
+		public boolean isActive6() {
+			return Boolean.parseBoolean(active6);
+		}
 	}
 
 }

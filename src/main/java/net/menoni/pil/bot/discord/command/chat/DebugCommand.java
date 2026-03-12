@@ -14,7 +14,10 @@ import net.dv8tion.jda.api.requests.restaction.ChannelAction;
 import net.menoni.jda.commons.discord.chatcommand.ChatCommand;
 import net.menoni.jda.commons.util.JDAUtil;
 import net.menoni.pil.bot.jdbc.model.JdbcFeedbackChannel;
+import net.menoni.pil.bot.jdbc.model.JdbcMatch;
 import net.menoni.pil.bot.jdbc.repository.FeedbackChannelRepository;
+import net.menoni.pil.bot.service.MatchChannelService;
+import net.menoni.pil.bot.service.MatchService;
 import net.menoni.ws.discord.config.BaseConstants;
 import org.springframework.context.ApplicationContext;
 
@@ -53,13 +56,17 @@ public class DebugCommand implements ChatCommand {
 		}
 
 		try {
+			if (args[0].equalsIgnoreCase("channelnames")) {
+				this._exec_channelNames(applicationContext, channel, member, message, alias, args);
+			}
 //			if (args[0].equalsIgnoreCase("s3")) {
 //				this._exec_s3(applicationContext, channel, member, message, alias, args);
 //			} else if (args[0].equalsIgnoreCase("cleanfeedback")) {
 //				this._exec_cleanfeedback(applicationContext, channel, member, message, alias, args);
-//			} else {
-				reply(channel, alias, "Invalid sub-command: `%s`".formatted(args[0]));
 //			}
+			else {
+				reply(channel, alias, "Invalid sub-command: `%s`".formatted(args[0]));
+			}
 		} catch (Exception ex) {
 			reply(channel, alias, "Error executing command:\n```%s```".formatted(ex.getMessage()));
 		}
@@ -70,10 +77,33 @@ public class DebugCommand implements ChatCommand {
 	@Override
 	public Collection<String> help() {
 		return List.of(
-				"!debug -- show this help"
+				"!debug -- show this help",
+				"!debug channelnames -- update all channel names"
 //				"!debug s3 -- do s2 -> s3 ding",
 //				"!debug cleanfeedback - clean feedback"
 		);
+	}
+
+	private void _exec_channelNames(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) throws Exception {
+		MatchService matchService = applicationContext.getBean(MatchService.class);
+		MatchChannelService matchChannelService = applicationContext.getBean(MatchChannelService.class);
+
+		List<JdbcMatch> matches = matchService.findAll();
+		int updated = 0;
+		for (JdbcMatch match : matches) {
+			TextChannel c = channel.getGuild().getTextChannelById(match.getMatchChannelId());
+			if (c == null) {
+				continue;
+			}
+			try {
+				if (matchChannelService.updateMatchChannelName(channel.getGuild(), match)) {
+					updated++;
+				}
+			} catch (Exception e) {
+				log.error("Failed to update match channel name", e);
+			}
+		}
+		reply(channel, alias, "Completed (updated %d)".formatted(updated));
 	}
 
 	private void _exec_cleanfeedback(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) throws Exception {

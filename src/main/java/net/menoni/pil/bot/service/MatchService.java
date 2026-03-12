@@ -26,6 +26,10 @@ public class MatchService {
 	@Autowired
 	private CsvService csvService;
 
+	public List<JdbcMatch> findAll() {
+		return matchRepository.all();
+	}
+
 	public String createLeagueMatchesResultsMessage(List<JdbcTeam> teams, List<JdbcMatch> matches, int round) {
 		matches.sort(Comparator.comparingInt(JdbcMatch::getDivision).thenComparingLong(JdbcMatch::getId));
 
@@ -117,7 +121,7 @@ public class MatchService {
 						Integer.toString(match.getDivision()),
 						teamWin.getName(),
 						teamLose.getName(),
-						Integer.toString(winscore) + 1,
+						Integer.toString(winscore + 1),
 						Integer.toString(match.getLoseTeamScore()),
 						(match.getWinTeamScore() == 0 ? "FF" : ""),
 				});

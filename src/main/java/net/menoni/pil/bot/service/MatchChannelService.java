@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.components.selections.StringSelectMenu;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.PermissionOverride;
 import net.dv8tion.jda.api.entities.Role;
@@ -17,7 +18,9 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.managers.channel.attribute.IPermissionContainerManager;
 import net.dv8tion.jda.api.requests.restaction.ChannelAction;
 import net.menoni.jda.commons.util.JDAUtil;
+import net.menoni.pil.bot.config.Constants;
 import net.menoni.pil.bot.discord.DiscordBot;
+import net.menoni.pil.bot.discord.emote.StandardEmoji;
 import net.menoni.pil.bot.jdbc.model.JdbcMatch;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
 import net.menoni.pil.bot.jdbc.model.JdbcTeamSignup;
@@ -32,6 +35,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -268,7 +272,46 @@ public class MatchChannelService extends ListenerAdapter {
 							parsedMatchScore.print()
 					)))).queue(), err -> log.error("Failed to find pin-message for match " + match.getId(), err)
 			);
+			try {
+				this.updateMatchChannelName(member.getGuild(), match);
+			} catch (Exception e) {
+				log.error("Failed to update match channel name", e);
+			}
 		});
+	}
+
+	public boolean updateMatchChannelName(Guild guild, JdbcMatch match) throws Exception {
+		TextChannel channel = guild.getTextChannelById(match.getMatchChannelId());
+		if (channel == null) {
+			throw new Exception("Failed to find channel for match " + match.getId());
+		}
+		int roundNum = match.getRoundNumber();
+		RoundType roundType = RoundType.forRoundNumber(roundNum);
+		if (roundType == null) {
+			throw new Exception("Round type not found for round number " + roundNum);
+		}
+		int division = match.getDivision();
+		JdbcTeam team1 = teamService.getTeamById(match.getFirstTeamId());
+		JdbcTeam team2 = teamService.getTeamById(match.getSecondTeamId());
+		if (team1 == null || team2 == null) {
+			throw new Exception("Could not find team %d or %d".formatted(match.getFirstTeamId(), match.getSecondTeamId()));
+		}
+		Role teamRole1 = guild.getRoleById(team1.getDiscordRoleId());
+		Role teamRole2 = guild.getRoleById(team2.getDiscordRoleId());
+		if (teamRole1 == null || teamRole2 == null) {
+			throw new Exception("Could not find team role %s or %s".formatted(team1.getDiscordRoleId(), team2.getDiscordRoleId()));
+		}
+		String prefix = "";
+		if (match.getWinTeamId() != null) {
+			prefix = StandardEmoji.WHITE_CHECK_MARK.print() + Constants.CHANNEL_EMOTE_DIVIDER;
+		}
+		String name = roundType.matchChannelName(division, roundNum, teamRole1.getName(), teamRole2.getName()).toLowerCase();
+		name = prefix + name;
+		if (channel.getName().equals(name)) {
+			return false;
+		}
+		JDAUtil.queueAndWait(channel.getManager().setName(name));
+		return true;
 	}
 
 	private JdbcTeamSignup validateMember(StringSelectInteractionEvent event) {

@@ -38,9 +38,6 @@ public class TeamSignupRepository extends AbstractTypeRepository<JdbcTeamSignup>
 		if (signup == null) {
 			return null;
 		}
-		if (signup.isArchived()) {
-			return null;
-		}
 		if (signup.getId() == null) {
 			GeneratedKeyHolder key = this.insertOne(
 					"INSERT INTO team_signup (team_id, discord_name, trackmania_name, trackmania_uuid, team_lead, hidden, archived) VALUES (:teamId, :discordName, :trackmaniaName, :trackmaniaUuid, :teamLead, :hidden, :archived)",
@@ -49,7 +46,7 @@ public class TeamSignupRepository extends AbstractTypeRepository<JdbcTeamSignup>
 			signup.setId(key.getKey().longValue());
 		} else {
 			this.update(
-					"UPDATE team_signup SET team_id = :teamId, discord_name = :discordName, trackmania_name = :trackmaniaName, trackmania_uuid = :trackmaniaUuid, team_lead = :teamLead, hidden = :hidden WHERE id = :id",
+					"UPDATE team_signup SET team_id = :teamId, discord_name = :discordName, trackmania_name = :trackmaniaName, trackmania_uuid = :trackmaniaUuid, team_lead = :teamLead, hidden = :hidden, archived = :archived WHERE id = :id",
 					NullableMap.create()
 							.add("teamId", signup.getTeamId())
 							.add("discordName", signup.getDiscordName())
@@ -57,7 +54,7 @@ public class TeamSignupRepository extends AbstractTypeRepository<JdbcTeamSignup>
 							.add("trackmaniaUuid", signup.getTrackmaniaUuid())
 							.add("teamLead", signup.isTeamLead())
 							.add("hidden", signup.isHidden())
-							.add("archived", false)
+							.add("archived", signup.isArchived())
 							.add("id", signup.getId())
 			);
 		}
@@ -75,7 +72,7 @@ public class TeamSignupRepository extends AbstractTypeRepository<JdbcTeamSignup>
 	}
 
 	public List<JdbcTeamSignup> getAllSignups() {
-		return this.queryMany("SELECT id, team_id, discord_name, trackmania_name, trackmania_uuid, team_lead, hidden, archived FROM team_signup WHERE archived = false");
+		return this.queryMany("SELECT id, team_id, discord_name, trackmania_name, trackmania_uuid, team_lead, hidden, archived FROM team_signup");
 	}
 
 	public void deleteSignupsForTeam(Long teamId) {

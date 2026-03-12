@@ -29,6 +29,10 @@ import net.menoni.pil.bot.util.DiscordFormattingUtil;
 import net.menoni.pil.bot.util.DiscordRoleUtil;
 import net.menoni.pil.bot.util.Obj;
 import net.menoni.spring.commons.service.CsvService;
+import net.menoni.ws.client.MenoniWsClient;
+import net.menoni.ws.common.model.nadeo.WsNadeoPlayer;
+import net.menoni.ws.discord.service.PlayerDisplayService;
+import net.menoni.ws.discord.service.display.PlayerDisplays;
 import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
@@ -77,6 +81,8 @@ public class TeamCommand implements ChatCommand {
 			return this._execute_sort(applicationContext, channel, member, message, alias, args);
 		} else if (args[0].equalsIgnoreCase("export")) {
 			return this._execute_export(applicationContext, channel, member, message, alias, args);
+		} else if (args[0].equalsIgnoreCase("print")) {
+			return this._execute_print(applicationContext, channel, member, message, alias, args);
 		}
 
 		sendHelp(channel, "invalid action");
@@ -94,7 +100,8 @@ public class TeamCommand implements ChatCommand {
 				"!team emote <team-role> delete -- remove team emote",
 				"!team delete <team-role> -- delete a team fully from the discord and bot DB",
 				"!team sort -- re-order all teams alphabetically",
-				"!team export -- export CSV of team data for xeru script"
+				"!team export -- export CSV of team data for xeru script",
+				"!team print <team> -- print a team & members nicely"
 		);
 	}
 	private boolean _execute_list(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) {
@@ -165,6 +172,61 @@ public class TeamCommand implements ChatCommand {
 			}
 		}
 		JDAUtil.queueAndWait(channel.sendMessage(sb.toString()).setAllowedMentions(List.of()));
+		return true;
+	}
+
+	private boolean _execute_print(ApplicationContext applicationContext, GuildMessageChannelUnion channel, Member member, Message message, String alias, String[] args) {
+		if (args.length < 2) {
+			sendHelp(channel, "Not enough arguments");
+			return true;
+		}
+
+		String teamId = args[1];
+		teamId = DiscordArgUtil.getRoleId(teamId);
+		if (teamId == null) {
+			reply(channel, alias, "Invalid team role input");
+			return true;
+		}
+
+		TeamService teamService = applicationContext.getBean(TeamService.class);
+		JdbcTeam team = teamService.getTeamByRoleId(teamId);
+		if (team == null) {
+			reply(channel, alias, "Team not found");
+			return true;
+		}
+		List<JdbcTeamSignup> signups = teamService.getAllSignups()
+				.stream()
+				.filter(s -> Objects.equals(team.getId(), s.getTeamId()))
+				.toList();
+
+		MenoniWsClient ws = applicationContext.getBean(MenoniWsClient.class);
+		PlayerDisplayService playerDisplayService = applicationContext.getBean(PlayerDisplayService.class);
+		try {
+			List<WsNadeoPlayer> players = ws.getNadeoDomain().getPlayerService().getPlayersByIds(signups.stream().map(JdbcTeamSignup::getTrackmaniaUuid).toList());
+
+			List<String> playersStrings = new ArrayList<>();
+			for (JdbcTeamSignup signup : signups) {
+				WsNadeoPlayer pl = players.stream().filter(p -> Objects.equals(p.getAccountId(), signup.getTrackmaniaUuid())).findAny().orElse(null);
+				playersStrings.add(
+						playerDisplayService.formatPlayer(PlayerDisplays.FLAG_OR_EMPTY_STR, pl) + " " +
+						playerDisplayService.formatPlayer(PlayerDisplays.REAL_NAME, pl)
+				);
+			}
+
+			StringBuilder sb = new StringBuilder();
+			sb.append(DiscordFormattingUtil.teamEmoteAsString(team));
+			sb.append(" **%s**".formatted(DiscordFormattingUtil.escapeFormatting(team.getName())));
+			sb.append(" - ");
+			sb.append(String.join(" / ", playersStrings));
+
+			JDAUtil.queueAndWait(channel.sendMessage(sb.toString()));
+		} catch (Exception e) {
+			reply(channel, alias, "Error:\n```%s: %s```".formatted(
+					e.getClass().getSimpleName(),
+					e.getMessage()
+			));
+			log.error("Error executing team-print", e);
+		}
 		return true;
 	}
 
