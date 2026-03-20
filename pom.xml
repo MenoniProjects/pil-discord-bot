@@ -13,17 +13,16 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.5.9</version>
+    <version>3.5.11</version>
   </parent>
 
   <properties>
-    <build.number>b53</build.number>
+    <build.number>b55</build.number>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <java.version>17</java.version>
     <!-- dependency versions -->
-    <menoni.spring.commons.version>1.6.1</menoni.spring.commons.version>
     <menoni.ws.discord>1.0.0-SNAPSHOT</menoni.ws.discord>
     <guava.version>33.4.0-jre</guava.version>
     <junit.version>4.13.2</junit.version>
@@ -35,11 +34,6 @@
       <groupId>net.menoni</groupId>
       <artifactId>menoni-ws-discord</artifactId>
       <version>${menoni.ws.discord}</version>
-    </dependency>
-    <dependency>
-      <groupId>net.menoni</groupId>
-      <artifactId>menoni-spring-commons</artifactId>
-      <version>${menoni.spring.commons.version}</version>
     </dependency>
     <!-- spring -->
     <dependency>
