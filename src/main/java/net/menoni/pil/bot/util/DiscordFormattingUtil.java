@@ -2,6 +2,7 @@ package net.menoni.pil.bot.util;
 
 import net.dv8tion.jda.api.entities.IMentionable;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.utils.MarkdownSanitizer;
 import net.menoni.jda.commons.discord.emote.Emotable;
 import net.menoni.pil.bot.discord.emote.CustomEmote;
 import net.menoni.pil.bot.jdbc.model.JdbcTeam;
@@ -12,9 +13,6 @@ import java.util.regex.Pattern;
 
 public class DiscordFormattingUtil {
 
-	private static final String UNDERSCORE = Pattern.quote("_");
-	private static final String ASTERISK = Pattern.quote("*");
-
 	private static final String ARG_REPLACE = Pattern.quote("{}");
 	private static final Set<ArgFormatter<?>> FORMATTERS = Set.of(
 			ArgFormatter.of(Member.class, IMentionable::getAsMention, Member::getEffectiveName),
@@ -23,9 +21,7 @@ public class DiscordFormattingUtil {
 	);
 
 	public static String escapeFormatting(String input) {
-		input = input.replaceAll(UNDERSCORE, "\\\\_");
-		input = input.replaceAll(ASTERISK, "\\\\*");
-		return input;
+		return MarkdownSanitizer.escape(input);
 	}
 
 	public static String roleAsString(String roleId) {
