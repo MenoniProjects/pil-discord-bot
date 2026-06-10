@@ -1,11 +1,11 @@
-FROM openjdk:17-ea-17-jdk AS builder
+FROM azul/zulu-openjdk-debian:26-latest AS builder
 LABEL authors="wouto1997"
 WORKDIR application
 ARG JAR_FILE=target/pil-discord-bot.jar
 COPY ${JAR_FILE} app.jar
 RUN java -Djarmode=layertools -jar app.jar extract
 
-FROM openjdk:17-ea-17-jdk
+FROM azul/zulu-openjdk-debian:26-latest
 LABEL authors="wouto1997"
 WORKDIR application
 COPY --from=builder application/dependencies/ ./
