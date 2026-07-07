@@ -17,7 +17,7 @@
     </parent>
 
     <properties>
-        <build.number>b61</build.number>
+        <build.number>b62</build.number>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
